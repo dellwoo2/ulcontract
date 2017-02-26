@@ -21,7 +21,7 @@ import (
 	"io/ioutil"
 	"errors"
 	"fmt"
-        "time"
+//        "time"
 //	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/dellwoo2/ulcontract/shared"
