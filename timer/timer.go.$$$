@@ -24,7 +24,6 @@ import (
         "time"
 //	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/dellwoo2/Hello-World/shared"
  	"net/http" 
 	"bytes"
 )	
@@ -34,7 +33,6 @@ type SimpleChaincode struct {
 
 var count int
 var ccid string
-var   xx = shared.Args{1, 2}
 func main() {
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
@@ -85,8 +83,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 
 // write - invoke function to write key/value pair
 func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	var key, value string
-	var err error
+	//var key, value string
+	//var err error
 	fmt.Println("running write()")
 
         for i := 0; i < 1000000; i++ {

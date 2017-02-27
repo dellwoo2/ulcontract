@@ -16,7 +16,6 @@ limitations under the License.
 
 package main
 
-
 import (
 	"io/ioutil"
 	"errors"
@@ -24,7 +23,6 @@ import (
         "time"
 //	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/dellwoo2/Hello-World/shared"
  	"net/http" 
 	"bytes"
 )	
@@ -34,7 +32,6 @@ type SimpleChaincode struct {
 
 var count int
 var ccid string
-var   xx = shared.Args{1, 2}
 func main() {
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
