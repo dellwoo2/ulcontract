@@ -168,7 +168,7 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 }
 func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	valAsbytes, _ := stub.GetState("account.valuation")
-	contract.account.valuation= string(valAsbytes[:]) 
+	contract.account.valuation= "Valuation="+string(valAsbytes[:]) 
 
 
 	return  []byte(contract.account.valuation), nil
@@ -181,8 +181,10 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
-
+	} else if function == "valuation" {
+		return t.valuation(stub, args)
 	}
+
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
