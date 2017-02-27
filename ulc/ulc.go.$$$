@@ -19,6 +19,7 @@ package main
 
 import (
 //	"io/ioutil"
+	"encoding/json"
 	"errors"
 	"fmt"
 //        "time"
@@ -26,8 +27,8 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/dellwoo2/ulcontract/ulc/shared"
  //	"net/http" 
-    	"encoding/binary"
-   	"bytes"
+ //   	"encoding/binary"
+ //  	"bytes"
 )	
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
@@ -77,8 +78,8 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if len(args) != 1 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 1")
+	if len(args) != 8 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 8")
 	}
         count=0;
  	//xx = &shared.Args{1, 2} 
@@ -104,9 +105,16 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
   contract.term = args[5]
   contract.paymentFrequency=args[6]
   contract.owner=args[7]
-  var bin_buf bytes.Buffer
-  binary.Write( &bin_buf, binary.BigEndian, contract )
-	err := stub.PutState("Contract", bin_buf.Bytes() )
+  //var bin_buf bytes.Buffer
+  //binary.Write( &bin_buf, binary.BigEndian, contract )
+	err := stub.PutState("owner", []byte(contract.owner))
+	err = stub.PutState("paymentFrequency", []byte(contract.paymentFrequency))
+	err = stub.PutState("startDate ",  []byte(contract.startDate) )
+	err = stub.PutState("product", []byte(contract.product))
+	err = stub.PutState("life.smoker", []byte(contract.life.smoker))
+	err = stub.PutState("life.dob", []byte(contract.life.dob))
+	err = stub.PutState("life.gender",  []byte(contract.life.gender))
+
         //fmt.Println( xx.A )
 
 	if err != nil {
@@ -206,14 +214,36 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 
 	key = args[0]
 
-	valAsbytes, err := stub.GetState(key)
-        buff:=bytes.NewBuffer(valAsbytes)
-        var cont Contract
-	binary.Read(buff, binary.BigEndian, &cont)
-        str1:= "Product:"+cont.product+","+
-               "startDate:"+cont.startDate+","+
-		"owner:"+cont.owner+","+
-		"DOB:"+cont.life.dob
+	valAsbytes, err := stub.GetState("owner")
+	contract.owner= string(valAsbytes[:]) 
+
+	valAsbytes, err = stub.GetState("paymentFrequency")
+	contract.paymentFrequency= string(valAsbytes[:]) 
+
+	valAsbytes, err = stub.GetState("startDate")
+	contract.startDate= string(valAsbytes[:]) 
+
+	valAsbytes, err = stub.GetState("product")
+	contract.product= string(valAsbytes[:]) 
+
+	valAsbytes, err = stub.GetState("life.smoker")
+	contract.life.smoker= string(valAsbytes[:]) 
+
+	valAsbytes, err = stub.GetState("life.dob")
+	contract.life.dob= string(valAsbytes[:]) 
+
+	valAsbytes, err = stub.GetState("life.gender")
+	contract.life.gender= string(valAsbytes[:]) 
+
+	 b, err := json.Marshal(contract)
+	str1:=string(b)
+ //       buff:=bytes.NewBuffer(valAsbytes)
+ //       var cont Contract
+//	binary.Read(buff, binary.BigEndian, &cont)
+//        str1:= "Product:"+cont.product+","+
+//               "startDate:"+cont.startDate+","+
+//		"owner:"+cont.owner+","+
+//		"DOB:"+cont.life.dob
 
 //	x:=int64(count)
 //        str1:=strconv.FormatInt(x,10)
