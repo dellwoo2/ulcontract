@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 //        "time"
+	"log"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/dellwoo2/ulcontract/ulc/shared"
@@ -128,6 +129,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running " + function)
+        log.print("DE***** Invoke Function")
         //xx = shared.Args{1, 2} 
 	// Handle different functions
 	if function == "init" {
@@ -181,7 +183,6 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
-	}
 	} else if function == "valuation" {
 		return t.valuation(stub, args)
 	}

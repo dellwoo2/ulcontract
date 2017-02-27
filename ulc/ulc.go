@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 //        "time"
+	"log"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/dellwoo2/ulcontract/ulc/shared"
@@ -128,6 +129,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running " + function)
+        log.Print("DE***** Invoke Function")
         //xx = shared.Args{1, 2} 
 	// Handle different functions
 	if function == "init" {
@@ -163,6 +165,7 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 	i, _ := strconv.ParseInt( contract.account.valuation , 10, 64);
 	i = i + int64(bonus)
         contract.account.valuation= strconv.FormatInt(i, 64)
+ 	log.Print("DE***** Contract value="+contract.account.valuation)
 	stub.PutState("account.valuation",  []byte(contract.account.valuation))
 	return  []byte("processed"), nil
 }
