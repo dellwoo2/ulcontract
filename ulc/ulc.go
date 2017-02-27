@@ -18,18 +18,53 @@ package main
 
 
 import (
-	"io/ioutil"
+//	"io/ioutil"
 	"errors"
 	"fmt"
 //        "time"
 //	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/dellwoo2/ulcontract/ulc/shared"
- 	"net/http" 
+ //	"net/http" 
+    	"encoding/binary"
+   	"bytes"
 )	
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
+
+//*****************************************
+//* Contract Types
+
+type Fund struct{
+ fundId string
+ units  float64
+}
+type Account struct{
+  funds [100]Fund
+  lastvaluationDate string
+  valuation float64
+}
+type Life struct{
+ gender string
+ dob    string
+ smoker string
+}
+type Contract struct{
+ account Account
+ product string
+ startDate string
+ term  string
+ paymentFrequency string
+ owner  string
+ beneficiary string
+ life  Life
+}
+
+//*****************************************
+
+var contract Contract
+
 
 var count int
 var   xx = shared.Args{1, 2}
@@ -47,7 +82,31 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
         count=0;
  	//xx = &shared.Args{1, 2} 
-	err := stub.PutState("hello_world", []byte("Hi") )
+/****
+ gender 0
+ dob    1
+ smoker 2
+ product 3
+ startDate 4
+ Term  int64 5
+ PaymentFrequency 
+ Owner  7
+ Beneficiary 8
+**********/
+  //contract=new(Contract)
+  //contract.account=new(Account)
+  //contract.life=new(Life)
+  contract.life.gender=args[0]
+  contract.life.dob=args[1]
+  contract.life.smoker=args[2]
+  contract.product=args[3]
+  contract.startDate=args[4]
+  contract.term = args[5]
+  contract.paymentFrequency=args[6]
+  contract.owner=args[7]
+  var bin_buf bytes.Buffer
+  binary.Write( &bin_buf, binary.BigEndian, contract )
+	err := stub.PutState("Contract", bin_buf.Bytes() )
         //fmt.Println( xx.A )
 
 	if err != nil {
@@ -64,12 +123,36 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	if function == "init" {
 		return t.Init(stub, "init", args)
 	} else if function == "write" {
-		return t.write(stub, args)
+		return t.write(stub, args )
+	} else if function == "fundAllocation" {
+		return t.fundAllocation(stub, args)
+	} else if function == "applyPremium" {
+		return t.applyPremium(stub, args)
+	} else if function == "monthlyProcessing" {
+		return t.monthlyProcessing(stub, args)
+	} else if function == "valuation" {
+		return t.valuation(stub, args)
 	}
+
+
 	fmt.Println("invoke did not find func: " + function)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
 }
+func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+	return  []byte("allocated"), nil
+}
+func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	return  []byte("applied"), nil
+}
+func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	return  []byte("processed"), nil
+}
+func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	return  []byte("processed"), nil
+}
+
 
 // Query is our entry point for queries
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
@@ -77,6 +160,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -113,26 +197,35 @@ func (t *SimpleChaincode) write(stub shim.ChaincodeStubInterface, args []string)
 
 // read - query function to read key/value pair
 func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	//var key, jsonResp string
-	//var err error
+	var key , jsonResp string
+	var err error
 
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
 	}
 
-	//key = args[0]
-	//valAsbytes, err := stub.GetState(key)
+	key = args[0]
+
+	valAsbytes, err := stub.GetState(key)
+        buff:=bytes.NewBuffer(valAsbytes)
+        var cont Contract
+	binary.Read(buff, binary.BigEndian, &cont)
+        str1:= "Product:"+cont.product+","+
+               "startDate:"+cont.startDate+","+
+		"owner:"+cont.owner+","+
+		"DOB:"+cont.life.dob
+
 //	x:=int64(count)
 //        str1:=strconv.FormatInt(x,10)
 //	valAsbytes:=[]byte(str1)
-	resp, _ := http.Get("http://www.bbc.com")
-  	bb, _ := ioutil.ReadAll(resp.Body)
-	valAsbytes:=bb[0:50]
-	//if err != nil {
-	//	jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
-	//	return nil, errors.New(jsonResp)
-	//}
+//	resp, _ := http.Get("http://www.bbc.com")
+//  	bb, _ := ioutil.ReadAll(resp.Body)
+//	valAsbytes:=bb[0:50]
+	if err != nil {
+		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
+		return nil, errors.New(jsonResp)
+	}
 
 
-	return valAsbytes, nil
+	return []byte(str1), nil
 }
