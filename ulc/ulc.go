@@ -19,7 +19,7 @@ package main
 
 import (
 //	"io/ioutil"
-	"encoding/json"
+//	"encoding/json"
 	"errors"
 	"fmt"
 //        "time"
@@ -235,15 +235,15 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 	valAsbytes, err = stub.GetState("life.gender")
 	contract.life.gender= string(valAsbytes[:]) 
 
-	 b, err := json.Marshal(contract)
-	str1:=string(b)
+//	 b, err := json.Marshal(contract)
+//	str1:=string(b)
  //       buff:=bytes.NewBuffer(valAsbytes)
  //       var cont Contract
 //	binary.Read(buff, binary.BigEndian, &cont)
-//        str1:= "Product:"+cont.product+","+
-//               "startDate:"+cont.startDate+","+
-//		"owner:"+cont.owner+","+
-//		"DOB:"+cont.life.dob
+        str1:= "Product:"+contract.product+","+
+               "startDate:"+contract.startDate+","+
+		"owner:"+contract.owner+","+
+		"DOB:"+contract.life.dob
 
 //	x:=int64(count)
 //        str1:=strconv.FormatInt(x,10)

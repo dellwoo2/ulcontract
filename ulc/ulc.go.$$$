@@ -113,7 +113,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState("product", []byte(contract.product))
 	err = stub.PutState("life.smoker", []byte(contract.life.smoker))
 	err = stub.PutState("life.dob", []byte(contract.life.dob))
-	//err = stub.PutState("life.gender",  []byte(contract.life.gender))
+	err = stub.PutState("life.gender",  []byte(contract.life.gender))
 
         //fmt.Println( xx.A )
 
@@ -235,15 +235,15 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 	valAsbytes, err = stub.GetState("life.gender")
 	contract.life.gender= string(valAsbytes[:]) 
 
-	 b, err := json.Marshal(contract)
-	str1:=string(b)
+//	 b, err := json.Marshal(contract)
+//	str1:=string(b)
  //       buff:=bytes.NewBuffer(valAsbytes)
  //       var cont Contract
 //	binary.Read(buff, binary.BigEndian, &cont)
-//        str1:= "Product:"+cont.product+","+
-//               "startDate:"+cont.startDate+","+
-//		"owner:"+cont.owner+","+
-//		"DOB:"+cont.life.dob
+        str1:= "Product:"+cont.product+","+
+               "startDate:"+cont.startDate+","+
+		"owner:"+cont.owner+","+
+		"DOB:"+cont.life.dob
 
 //	x:=int64(count)
 //        str1:=strconv.FormatInt(x,10)
