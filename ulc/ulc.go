@@ -112,7 +112,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState("startDate ",  []byte(contract.startDate) )
 	err = stub.PutState("product", []byte(contract.product))
 	err = stub.PutState("life.smoker", []byte(contract.life.smoker))
-	//err = stub.PutState("life.dob", []byte(contract.life.dob))
+	err = stub.PutState("life.dob", []byte(contract.life.dob))
 	//err = stub.PutState("life.gender",  []byte(contract.life.gender))
 
         //fmt.Println( xx.A )
