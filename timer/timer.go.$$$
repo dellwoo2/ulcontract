@@ -35,13 +35,11 @@ var ccid string
 func main() {
      sstr:= "b93f36b5cdf0cc16f7e2f5a30c05431547ec049215dff9cfd6f4d8ef6b20cbdbffefd59b11fe538872e87a41a1471637ccc3c4c9ff4cbccfbafdf3ebc83f075a"
 
-    xCC(sstr )
-/***************
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
-*************/
+
 }
 
 
@@ -147,7 +145,7 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 	return nil , nil
 }
 func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []string) {
-    url :="https://e9aeb13602254217bdb0e8b425c82732-ca.us.blockchain.ibm.com:30003/chaincode"
+    url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
     //valAsbytes, err := stub.GetState("CCID")
     //ccstr:=string(valAsbytes)
     jsonStr := []byte( `
