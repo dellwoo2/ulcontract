@@ -18,6 +18,7 @@ package main
 
 
 import (
+	"os"
 //	"io/ioutil"
 //	"encoding/json"
 	"errors"
@@ -30,9 +31,8 @@ import (
  //	"net/http" 
  //   	"encoding/binary"
  //  	"bytes"
-	"github.com/dellwoo2/ulcontract/ulc/go-logging"
 )	
-var chaincodeLog = logging.MustGetLogger("chaincode")
+
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
@@ -86,7 +86,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
         count=0;
  	//xx = &shared.Args{1, 2} 
-chaincodeLog.Info("DE************* INIT CHAINCODE")
+	l := log.New(os.Stderr, "", 0)
+	l.Println("DE************* INIT CHAINCODE")
 /****
  gender 0
  dob    1
@@ -132,7 +133,8 @@ chaincodeLog.Info("DE************* INIT CHAINCODE")
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running " + function)
-        log.Print("DE***** Invoke Function")
+	l := log.New(os.Stderr, "", 0)
+	l.Println("DE************* Invoke Function")
         //xx = shared.Args{1, 2} 
 	// Handle different functions
 	if function == "init" {
