@@ -20,7 +20,7 @@ package main
 import (
 	"os"
 //	"io/ioutil"
-//	"encoding/json"
+	"encoding/json"
 	"errors"
 	"fmt"
 //        "time"
@@ -41,28 +41,29 @@ type SimpleChaincode struct {
 //* Contract Types
 
 type Fund struct{
- fundId string
- units  string
+ FundId string
+ Units  string
 }
 type Account struct{
-  funds [100]Fund
-  lastvaluationDate string
-  valuation string
+  Fnds [100]Fund
+  LastvaluationDate string
+  Valuation string
 }
 type Life struct{
- gender string
- dob    string
- smoker string
+ Gender string
+ Dob    string
+ Smoker string
 }
 type Contract struct{
- account Account
- product string
- startDate string
- term  string
- paymentFrequency string
- owner  string
- beneficiary string
- life  Life
+ Acct Account
+ Product string
+ StartDate string
+ SumAssured string
+ Term  string
+ PaymentFrequency string
+ Owner  string
+ Beneficiary string
+ Lf  Life
 }
 
 //*****************************************
@@ -73,18 +74,19 @@ var contract Contract
 var count int
 var   xx = shared.Args{1, 2}
 func main() {
+/************
 	bonus:=121
 	contract.account.valuation="8989.89"
 	i, _ := strconv.ParseFloat( contract.account.valuation , 10);
 	i = i + float64(bonus)
         contract.account.valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	fmt.Print("DE***** Contract value="+contract.account.valuation)
-/************
+**************/
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
-**************/
+
 }
 
 // Init resets all the things
@@ -110,17 +112,18 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
   //contract=new(Contract)
   //contract.account=new(Account)
   //contract.life=new(Life)
-  contract.life.gender=args[0]
-  contract.life.dob=args[1]
-  contract.life.smoker=args[2]
-  contract.product=args[3]
-  contract.startDate=args[4]
-  contract.term = args[5]
-  contract.paymentFrequency=args[6]
-  contract.owner=args[7]
-  contract.account.valuation="0"
+  contract.Lf.Gender=args[0]
+  contract.Lf.Dob=args[1]
+  contract.Lf.Smoker=args[2]
+  contract.Product=args[3]
+  contract.StartDate=args[4]
+  contract.Term = args[5]
+  contract.PaymentFrequency=args[6]
+  contract.Owner=args[7]
+  contract.Acct.Valuation="0"
   //var bin_buf bytes.Buffer
   //binary.Write( &bin_buf, binary.BigEndian, contract )
+/*************************
 	err := stub.PutState("owner", []byte(contract.owner))
 	err = stub.PutState("paymentFrequency", []byte(contract.paymentFrequency))
 	err = stub.PutState("startDate",  []byte(contract.startDate) )
@@ -129,7 +132,10 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState("life.dob", []byte(contract.life.dob))
 	err = stub.PutState("life.gender",  []byte(contract.life.gender))
 	err = stub.PutState("account.valuation",  []byte(contract.account.valuation))
-	contract.account.valuation="8989.89"
+*********************/
+        b, err := json.Marshal(contract)
+	err = 	stub.PutState("Contract", b)
+
         //fmt.Println( xx.A )
 
 	if err != nil {
@@ -172,22 +178,28 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 	return  []byte("applied"), nil
 }
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+
 	bonus:=121
-//	valAsbytes, _ := stub.GetState("account.valuation")
-//	contract.account.valuation= string(valAsbytes[:]) 
-	i, _ := strconv.ParseInt( contract.account.valuation , 10, 64);
-	i = i + int64(bonus)
-        contract.account.valuation= strconv.FormatInt(i, 64)
- 	log.Print("DE***** Contract value="+contract.account.valuation)
-//	stub.PutState("account.valuation",  []byte(contract.account.valuation))
-	return  []byte("processed"), nil
+
+ 	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
+	valAsbytes, err := stub.GetState("Contract")
+    	json.Unmarshal(valAsbytes , &contract)
+	contract.Acct.Valuation= string(valAsbytes[:]) 
+	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
+	i = i + float64(bonus)
+        contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
+ 	log.Print("DE***** Contract value="+contract.Acct.Valuation)
+        b, err := json.Marshal(contract)
+	err = 	stub.PutState("Contract", b)
+
+	return  []byte("processed"), err
 }
 func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	//valAsbytes, _ := stub.GetState("account.valuation")
-	//contract.account.valuation= "Valuation="+string(valAsbytes[:]) 
+	valAsbytes, err := stub.GetState("Contract")
+    	json.Unmarshal(valAsbytes , &contract)
 
-
-	return  []byte(contract.account.valuation), nil
+	return  []byte("Valuation="+contract.Acct.Valuation), nil
 }
 
 
@@ -244,7 +256,7 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 	}
 
 	key = args[0]
-
+/*******************************
 	valAsbytes, err := stub.GetState("owner")
 	contract.owner= string(valAsbytes[:]) 
 
@@ -265,17 +277,17 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 
 	valAsbytes, err = stub.GetState("life.gender")
 	contract.life.gender= string(valAsbytes[:]) 
+*****************************/
+	valAsbytes, err := stub.GetState("Contract")
+    	json.Unmarshal(valAsbytes , &contract)
 
-//	 b, err := json.Marshal(contract)
-//	str1:=string(b)
- //       buff:=bytes.NewBuffer(valAsbytes)
- //       var cont Contract
 //	binary.Read(buff, binary.BigEndian, &cont)
+/************************
         str1:= "Product:"+contract.product+","+
                "startDate:"+contract.startDate+","+
 		"owner:"+contract.owner+","+
 		"DOB:"+contract.life.dob
-
+************************/
 //	x:=int64(count)
 //        str1:=strconv.FormatInt(x,10)
 //	valAsbytes:=[]byte(str1)
@@ -288,5 +300,5 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string) 
 	}
 
 
-	return []byte(str1), nil
+	return valAsbytes, nil
 }
