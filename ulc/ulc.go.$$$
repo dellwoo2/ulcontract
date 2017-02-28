@@ -199,7 +199,7 @@ func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []str
 	valAsbytes, err := stub.GetState("Contract")
     	json.Unmarshal(valAsbytes , &contract)
 
-	return  []byte("Valuation="+contract.Acct.Valuation), nil
+	return  []byte("Valuation="+contract.Acct.Valuation), err
 }
 
 

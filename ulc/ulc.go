@@ -185,7 +185,7 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
 	valAsbytes, err := stub.GetState("Contract")
     	json.Unmarshal(valAsbytes , &contract)
-	contract.Acct.Valuation= string(valAsbytes[:]) 
+
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
 	i = i + float64(bonus)
         contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
