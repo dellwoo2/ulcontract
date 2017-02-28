@@ -121,7 +121,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState("life.dob", []byte(contract.life.dob))
 	err = stub.PutState("life.gender",  []byte(contract.life.gender))
 	err = stub.PutState("account.valuation",  []byte(contract.account.valuation))
-
+	contract.account.valuation="8989.89"
         //fmt.Println( xx.A )
 
 	if err != nil {
@@ -177,7 +177,7 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	//valAsbytes, _ := stub.GetState("account.valuation")
 	//contract.account.valuation= "Valuation="+string(valAsbytes[:]) 
-	contract.account.valuation="8989.89"
+
 
 	return  []byte(contract.account.valuation), nil
 }
