@@ -33,11 +33,63 @@ type SimpleChaincode struct {
 var count int
 var ccid string
 func main() {
+     sstr:= "b93f36b5cdf0cc16f7e2f5a30c05431547ec049215dff9cfd6f4d8ef6b20cbdbffefd59b11fe538872e87a41a1471637ccc3c4c9ff4cbccfbafdf3ebc83f075a"
+
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
+
 }
+
+
+
+func  xCC(sstr string ) {
+    url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
+    //valAsbytes, err := stub.GetState("CCID")
+    //ccstr:=string(valAsbytes)
+    jsonStr := []byte( `
+  {
+     "jsonrpc": "2.0",
+     "method": "invoke",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "name": "` +sstr+ `"
+         },
+         "ctorMsg": {
+             "function": "schedule",
+             "args": [
+                 "dtest",
+                 "I am Here XXXX"
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 3
+ }`)
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    fmt.Println(err)
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    fmt.Println(err)
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println("response Status:", resp.Status)
+    fmt.Println("response Headers:", resp.Header)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("response Body:", string(body))
+    defer resp.Body.Close()
+
+}
+
+
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
@@ -93,7 +145,7 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 	return nil , nil
 }
 func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []string) {
-    url :="https://e9aeb13602254217bdb0e8b425c82732-ca.us.blockchain.ibm.com:30003/chaincode"
+    url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
     //valAsbytes, err := stub.GetState("CCID")
     //ccstr:=string(valAsbytes)
     jsonStr := []byte( `
