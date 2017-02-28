@@ -175,8 +175,8 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 	return  []byte("processed"), nil
 }
 func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	valAsbytes, _ := stub.GetState("account.valuation")
-	contract.account.valuation= "Valuation="+string(valAsbytes[:]) 
+	//valAsbytes, _ := stub.GetState("account.valuation")
+	//contract.account.valuation= "Valuation="+string(valAsbytes[:]) 
 
 
 	return  []byte(contract.account.valuation), nil
