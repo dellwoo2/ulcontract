@@ -30,7 +30,9 @@ import (
  //	"net/http" 
  //   	"encoding/binary"
  //  	"bytes"
+	""github.com/dellwoo2/ulcontract/ulc/go-logging"
 )	
+var chaincodeLog = logging.MustGetLogger("chaincode")
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
@@ -84,6 +86,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
         count=0;
  	//xx = &shared.Args{1, 2} 
+chaincodeLog.Info("DE************* INIT CHAINCODE")
 /****
  gender 0
  dob    1

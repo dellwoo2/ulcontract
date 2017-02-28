@@ -30,7 +30,7 @@ import (
  //	"net/http" 
  //   	"encoding/binary"
  //  	"bytes"
-	"github.com/op/go-logging"
+	"github.com/dellwoo2/ulcontract/ulc/go-logging"
 )	
 var chaincodeLog = logging.MustGetLogger("chaincode")
 // SimpleChaincode example simple Chaincode implementation
