@@ -73,10 +73,19 @@ var contract Contract
 var count int
 var   xx = shared.Args{1, 2}
 func main() {
+/************
+	bonus:=121
+	contract.account.valuation="8989.89"
+	i, _ := strconv.ParseFloat( contract.account.valuation , 10);
+	i = i + float64(bonus)
+        contract.account.valuation= strconv.FormatFloat(i,  'f' , 2,  64)
+ 	fmt.Print("DE***** Contract value="+contract.account.valuation)
+**************/
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
+
 }
 
 // Init resets all the things
@@ -121,7 +130,6 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState("life.dob", []byte(contract.life.dob))
 	err = stub.PutState("life.gender",  []byte(contract.life.gender))
 	err = stub.PutState("account.valuation",  []byte(contract.account.valuation))
-	contract.account.valuation="8989.89"
         //fmt.Println( xx.A )
 
 	if err != nil {
@@ -164,19 +172,23 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 	return  []byte("applied"), nil
 }
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+
 	bonus:=121
-//	valAsbytes, _ := stub.GetState("account.valuation")
-//	contract.account.valuation= string(valAsbytes[:]) 
-	i, _ := strconv.ParseInt( contract.account.valuation , 10, 64);
-	i = i + int64(bonus)
-        contract.account.valuation= strconv.FormatInt(i, 64)
+
+ 	fmt.Print("DE***** Contract value="+contract.account.valuation)
+	valAsbytes, _ := stub.GetState("account.valuation")
+	contract.account.valuation= string(valAsbytes[:]) 
+	i, _ := strconv.ParseFloat( contract.account.valuation , 10);
+	i = i + float64(bonus)
+        contract.account.valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+contract.account.valuation)
-//	stub.PutState("account.valuation",  []byte(contract.account.valuation))
+	stub.PutState("account.valuation",  []byte(contract.account.valuation))
 	return  []byte("processed"), nil
 }
 func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	//valAsbytes, _ := stub.GetState("account.valuation")
-	//contract.account.valuation= "Valuation="+string(valAsbytes[:]) 
+	valAsbytes, _ := stub.GetState("account.valuation")
+	contract.account.valuation= "Valuation="+string(valAsbytes[:]) 
 
 
 	return  []byte(contract.account.valuation), nil
