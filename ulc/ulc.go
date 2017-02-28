@@ -165,13 +165,13 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 }
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	bonus:=121
-	valAsbytes, _ := stub.GetState("account.valuation")
-	contract.account.valuation= string(valAsbytes[:]) 
+//	valAsbytes, _ := stub.GetState("account.valuation")
+//	contract.account.valuation= string(valAsbytes[:]) 
 	i, _ := strconv.ParseInt( contract.account.valuation , 10, 64);
 	i = i + int64(bonus)
         contract.account.valuation= strconv.FormatInt(i, 64)
  	log.Print("DE***** Contract value="+contract.account.valuation)
-	stub.PutState("account.valuation",  []byte(contract.account.valuation))
+//	stub.PutState("account.valuation",  []byte(contract.account.valuation))
 	return  []byte("processed"), nil
 }
 func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
