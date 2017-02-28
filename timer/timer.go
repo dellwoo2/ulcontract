@@ -93,7 +93,7 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 	return nil , nil
 }
 func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []string) {
-    url :="https://05bad094e56343ee9c31da74966b3413-vp0.us.blockchain.ibm.com:5003/chaincode"
+    url :="https://e9aeb13602254217bdb0e8b425c82732-ca.us.blockchain.ibm.com:30003/chaincode"
     //valAsbytes, err := stub.GetState("CCID")
     //ccstr:=string(valAsbytes)
     jsonStr := []byte( `

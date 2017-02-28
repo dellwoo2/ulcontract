@@ -88,14 +88,14 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 
         for i := 0; i < 1000000; i++ {
 		time.Sleep(time.Second * 60)
-		t.callCC(stub)
+		t.callCC(stub , args )
 	}
 	return nil , nil
 }
-func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface ) {
+func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []string) {
     url :="https://05bad094e56343ee9c31da74966b3413-vp0.us.blockchain.ibm.com:5003/chaincode"
-    valAsbytes, err := stub.GetState("CCID")
-    ccstr:=string(valAsbytes)
+    //valAsbytes, err := stub.GetState("CCID")
+    //ccstr:=string(valAsbytes)
     jsonStr := []byte( `
   {
      "jsonrpc": "2.0",
@@ -103,7 +103,7 @@ func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface ) {
      "params": {
          "type": 1,
          "chaincodeID": {
-             "name": "` + ccstr+ `"
+             "name": "` + args[0]+ `"
          },
          "ctorMsg": {
              "function": "schedule",
