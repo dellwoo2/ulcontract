@@ -46,7 +46,7 @@ type Fund struct{
  Units  string
 }
 type Account struct{
-  Fnds [100]Fund
+  Fnds [20]Fund
   LastvaluationDate string
   Valuation string
 }
@@ -166,10 +166,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.valuation(stub, args)
 	} else if function == "surrender" {
 		return t.surrender(stub, args)
-	} else if function == "statement" {
-		return t.statement(stub, args)
-	}
-
+	} 
 	fmt.Println("invoke did not find func: " + function)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
@@ -193,7 +190,7 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
 }
 
 func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-    	var fnd[100]Fund
+    	var fnd[20]Fund
         json.Unmarshal([]byte(args[0]), &fnd)
 	valAsbytes, err := stub.GetState("Contract")
     	json.Unmarshal(valAsbytes , &contract)
@@ -232,7 +229,6 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
-	t.statement(stub, args)
 	return  []byte("processed"), err
 }
 func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -253,7 +249,8 @@ To: dellwoo2@csc.com
 Subject: Monthly Statement;
 
 Body: Your Statement of account:
-`+ string (valAsbytes ) + `
+Account Holder:`+contract.Owner+`
+Value:`+contract.Acct.Valuation+`
 
 Sincerely, Danny `
 
@@ -268,7 +265,7 @@ Sincerely, Danny `
     if err != nil {
      fmt.Print(err)
     }
-
+	return  []byte("Mail sent"), err
 }
 func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	valAsbytes, err := stub.GetState("Contract")
@@ -284,6 +281,10 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+	}else if function == "statement" {
+		return t.statement(stub, args)
+	}
+
 	} else if function == "valuation" {
 		return t.valuation(stub, args)
 	}

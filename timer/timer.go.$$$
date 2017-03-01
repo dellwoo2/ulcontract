@@ -112,9 +112,6 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// Handle different functions
 	if function == "init" {
 		return t.Init(stub, "init", args)
-	} else if function == "schedule" {
-		return t.schedule(stub, args)
-	}
 	fmt.Println("invoke did not find func: " + function)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
@@ -126,13 +123,15 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+	} else if function == "schedule" {
+		return t.schedule(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
 }
 
-// write - invoke function to write key/value pair
+// Schedule - query function to call invoke methods on contract
 func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	//var key, value string
 	//var err error
@@ -141,11 +140,13 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
         for i := 0; i < 1000000; i++ {
 		time.Sleep(time.Second * 60)
 		t.callCC(stub , args )
+		t.callDD(stub , args )
 	}
 	return nil , nil
 }
 func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []string) {
-    url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
+    //url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
+    url :=args[1]+"/chaincode"
     //valAsbytes, err := stub.GetState("CCID")
     //ccstr:=string(valAsbytes)
     jsonStr := []byte( `
@@ -186,6 +187,53 @@ func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []strin
     defer resp.Body.Close()
 
 }
+
+func (t *SimpleChaincode) callDD(stub shim.ChaincodeStubInterface , args []string) {
+    //url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
+    url :=args[1]+"/chaincode"
+    //valAsbytes, err := stub.GetState("CCID")
+    //ccstr:=string(valAsbytes)
+    jsonStr := []byte( `
+{
+     "jsonrpc": "2.0",
+     "method": "query",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "name": "` + args[0]+ `"
+         },
+         "ctorMsg": {
+             "function": "statement",
+             "args": [
+                 "Contract"
+             ]
+         },
+         "secureContext":"admin"
+     },
+     "id": 2
+ }
+ `)
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println("response Status:", resp.Status)
+    fmt.Println("response Headers:", resp.Header)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("response Body:", string(body))
+    defer resp.Body.Close()
+
+}
+
+
+
 
 
 // read - query function to read key/value pair
