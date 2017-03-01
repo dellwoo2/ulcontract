@@ -31,6 +31,7 @@ import (
  //	"net/http" 
  //   	"encoding/binary"
  //  	"bytes"
+	"net/smtp"
 )	
 
 // SimpleChaincode example simple Chaincode implementation
@@ -163,37 +164,111 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.monthlyProcessing(stub, args)
 	} else if function == "valuation" {
 		return t.valuation(stub, args)
+	} else if function == "surrender" {
+		return t.surrender(stub, args)
+	} else if function == "statement" {
+		return t.statement(stub, args)
 	}
-
 
 	fmt.Println("invoke did not find func: " + function)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
 }
-func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-
-	return  []byte("allocated"), nil
-}
-func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	return  []byte("applied"), nil
-}
-func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-
-
-	bonus:=121
-
+func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	surr, _ := strconv.ParseFloat( args[0] , 10);
+	surrchg:=20
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
 	valAsbytes, err := stub.GetState("Contract")
     	json.Unmarshal(valAsbytes , &contract)
-	contract.Acct.Valuation= string(valAsbytes[:]) 
+
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
-	i = i + float64(bonus)
+	i = i - float64(surr)
+	i = i - float64(surrchg)
         contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
 
+	return  []byte("surrendered"), err
+}
+
+func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+    	var fnd[100]Fund
+        json.Unmarshal([]byte(args[0]), &fnd)
+	valAsbytes, err := stub.GetState("Contract")
+    	json.Unmarshal(valAsbytes , &contract)
+        contract.Acct.Fnds=fnd
+        b, err := json.Marshal(contract)
+	err = 	stub.PutState("Contract", b)
+	return  []byte("Funds_allocated"), err
+}
+func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	premium, _ := strconv.ParseFloat( args[0] , 10);
+
+ 	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
+	valAsbytes, err := stub.GetState("Contract")
+    	json.Unmarshal(valAsbytes , &contract)
+
+	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
+	i = i + float64(premium)
+        contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
+ 	log.Print("DE***** Contract value="+contract.Acct.Valuation)
+        b, err := json.Marshal(contract)
+	err = 	stub.PutState("Contract", b)
+	return  []byte("applied"), err
+}
+func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+
+
+	bonus:=33
+
+ 	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
+	valAsbytes, err := stub.GetState("Contract")
+    	json.Unmarshal(valAsbytes , &contract)
+
+	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
+	i = i - float64(bonus)
+        contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
+ 	log.Print("DE***** Contract value="+contract.Acct.Valuation)
+        b, err := json.Marshal(contract)
+	err = 	stub.PutState("Contract", b)
+	t.statement(stub, args)
 	return  []byte("processed"), err
+}
+func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+    // Set up authentication information.
+    auth := smtp.PlainAuth(
+        "",
+        "dannyellwood",
+        "Fr@nkly51",
+        "smtp.gmail.com",
+    )
+    // Connect to the server, authenticate, set the sender and recipient,
+    // and send the email all in one step.
+	valAsbytes, err := stub.GetState("Contract")
+    	json.Unmarshal(valAsbytes , &contract)
+
+str1:=`From:dannyellwood@gmail.com.org;
+To: dellwoo2@csc.com
+Subject: Monthly Statement;
+
+Body: Your Statement of account:
+`+ string (valAsbytes ) + `
+
+Sincerely, Danny `
+
+
+    err = smtp.SendMail(
+        "smtp.gmail.com:587",
+        auth,
+        "dannyellwood@gmail.com.org",
+        []string{"dellwoo2@csc.com" },
+        []byte(str1),
+    )
+    if err != nil {
+     fmt.Print(err)
+    }
+
 }
 func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	valAsbytes, err := stub.GetState("Contract")
