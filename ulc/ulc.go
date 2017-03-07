@@ -165,7 +165,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 //**************************************************
 // save the history
-/*
+
 	var h History
 	h.Methd="deploy"
 	h.Funct="init"
@@ -174,9 +174,9 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	h.Args=args
 	history[h.Tranid]=h
         b1, _ := json.Marshal(h)
-	_ = 	stub.PutState("History", b1)
-*/
-	return nil, nil
+	err=stub.PutState("History", b1)
+
+	return nil, err
 }
 
 // Invoke isur entry point to invoke a chaincode function
