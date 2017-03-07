@@ -71,7 +71,13 @@ type Contract struct{
  Status string
  Email string
 }
-
+type GLtran struct{
+ Dbacc string
+ Db    string
+ Cracc string
+ Cr string
+ Stat string
+}
 type History struct{
  Methd string
  Funct string
@@ -81,6 +87,7 @@ type History struct{
 }
 
 var history map[string]History
+var gltran map[string]GLtran
 //*****************************************
 
 var contract Contract
@@ -88,6 +95,7 @@ var contract Contract
 
 var count int
 var   xx = shared.Args{1, 2}
+var invokeTran string
 func main() {
 /************
 	bonus:=121
@@ -101,8 +109,29 @@ func main() {
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
-
-
+/*
+	history=make(map[string]History)
+	args:= []string{"x","c","v","b"}
+	var h History
+	h.Methd="deploy"
+	h.Funct="init"
+	h.Tranid=time.Now().String()
+	h.Cont=contract
+	h.Args=args
+        for i:=0 ; i < 30 ; i++ {
+	h.Tranid=time.Now().String()
+	history[h.Tranid]=h
+	time.Sleep(time.Millisecond)
+	}
+        b1, err := json.Marshal(h)
+	fmt.Print(err);
+	fmt.Print(string(b1))
+	fmt.Print(len(history))
+	for key, value := range history {
+		
+    		fmt.Println("Key:", key, "Value:", value.Cont.Owner)
+	}
+*/
 }
 
 // Init resets all the things
@@ -165,7 +194,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 //**************************************************
 // save the history
-
+	history=make(map[string]History)
 	var h History
 	h.Methd="deploy"
 	h.Funct="init"
@@ -181,8 +210,26 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	invokeTran=time.Now().String()
 	fmt.Println("invoke is running " + function)
 	l := log.New(os.Stderr, "", 0)
+
+	//*****************************************
+	// Save historic state & Invoke details
+	valAsbytes, _ := stub.GetState("History")
+    	json.Unmarshal(valAsbytes , &history)
+
+	var h History
+	h.Methd="invoke"
+	h.Funct=function
+	h.Tranid=invokeTran
+	h.Cont=contract
+	h.Args=args
+	history[h.Tranid]=h
+        b, _ := json.Marshal(history)
+	stub.PutState("History", b)
+	//*********************************************
+
 	l.Println("DE************* Invoke Function")
         //xx = shared.Args{1, 2} 
 	// Handle different functions
@@ -205,25 +252,16 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	} 
 	fmt.Println("invoke did not find func: " + function)
 
-	valAsbytes, _ := stub.GetState("History")
-    	json.Unmarshal(valAsbytes , &history)
 
-	var h History
-	h.Methd="deploy"
-	h.Funct="init"
-	h.Tranid=time.Now().String()
-	h.Cont=contract
-	h.Args=args
-	history[h.Tranid]=h
-        b, _ := json.Marshal(h)
-	stub.PutState("History", b)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
 }
 
 func (t *SimpleChaincode) setscheduler(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	scheduler=args[0]
+	ccid:=args[1]
 	err := 	stub.PutState("scheduler",[]byte(scheduler) )
+	err = 	stub.PutState("ccid",[]byte(ccid) )
 	return []byte("Scheduler ID set"),err
 }
 func (t *SimpleChaincode) activate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -278,8 +316,34 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
+	//*************************
+	// GL Posting
+	valAsbytes, err = stub.GetState("gltran")
+    	json.Unmarshal(valAsbytes , &gltran)
+	var glt GLtran
+ 	glt.Dbacc="BK001"
+ 	glt.Db= strconv.FormatFloat(float64(premium),  'f' , 2,  64)
+ 	glt.Cracc="CSUSP"
+ 	glt.Cr=strconv.FormatFloat(-float64(premium),  'f' , 2,  64)
+ 	glt.Stat="N"
+	gltran[invokeTran]=glt
+        b, err = json.Marshal(gltran)
+	stub.PutState("gltran", b)
 	return  []byte("applied"), err
 }
+
+func glPost( stub shim.ChaincodeStubInterface, glt GLtran)( error){
+	var err error
+        var valAsbytes, b []byte
+	valAsbytes, err = stub.GetState("gltran")
+    	json.Unmarshal(valAsbytes , &gltran)
+ 	glt.Stat="N"
+	gltran[invokeTran]=glt
+        b, err = json.Marshal(gltran)
+	stub.PutState("gltran", b)
+	return   err
+}
+
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 
