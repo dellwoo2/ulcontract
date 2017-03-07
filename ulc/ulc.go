@@ -102,6 +102,7 @@ func main() {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
 	}
 
+
 }
 
 // Init resets all the things
@@ -164,6 +165,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 //**************************************************
 // save the history
+/*
 	var h History
 	h.Methd="deploy"
 	h.Funct="init"
@@ -173,7 +175,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	history[h.Tranid]=h
         b1, _ := json.Marshal(h)
 	_ = 	stub.PutState("History", b1)
-
+*/
 	return nil, nil
 }
 
