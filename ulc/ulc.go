@@ -106,8 +106,8 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if len(args) != 8 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 8")
+	if len(args) != 11 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 11")
 	}
         count=0;
  	//xx = &shared.Args{1, 2} 
