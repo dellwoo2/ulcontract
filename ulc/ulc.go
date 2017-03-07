@@ -142,7 +142,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
   contract.Acct.Valuation="0"
   //var bin_buf bytes.Buffer
   //binary.Write( &bin_buf, binary.BigEndian, contract )
-/*************************
+
 	err := stub.PutState("owner", []byte(contract.Owner))
 	err = stub.PutState("paymentFrequency", []byte(contract.PaymentFrequency))
 	err = stub.PutState("startDate",  []byte(contract.StartDate) )
@@ -154,7 +154,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState("account.valuation",  []byte(contract.Acct.Valuation))
 	err = stub.PutState("email",  []byte(contract.Email))
 	err = stub.PutState("sumassured",  []byte(contract.SumAssured))
-*********************/
+
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
 
