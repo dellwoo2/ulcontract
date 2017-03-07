@@ -1,0 +1,38 @@
+<nil>https://ab331f9837d942f3b42495875cc8e542-vp0.us.blockchain.ibm.com:5003/chaincodeadmin7cec4dca61response Status: 200 OK
+Login: 
+2017-03-07 13:03:58.3465 +0800 SGT
+calling process
+Title=doit
+Insert new contract
+{
+     "jsonrpc": "2.0",
+     "method": "deploy",
+
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "path": "https://github.com/dellwoo2/ulcontract/ulc"
+         },
+         "ctorMsg": {
+             "function": "init",
+             "args": [
+                 "M",
+"09.09.1099",
+"F",
+"ULX",
+"09.08.2017",
+"10",
+"M",
+"78787",
+"Danny",
+"dellwoo2@csc.com",
+"567000"
+
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 1
+ }
+
+<nil><nil>

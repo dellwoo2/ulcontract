@@ -29,12 +29,12 @@ import (
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
-
+var state
 var count int
 var ccid string
 func main() {
  //    sstr:= "b93f36b5cdf0cc16f7e2f5a30c05431547ec049215dff9cfd6f4d8ef6b20cbdbffefd59b11fe538872e87a41a1471637ccc3c4c9ff4cbccfbafdf3ebc83f075a"
-
+	
 	err := shim.Start(new(SimpleChaincode))
 	if err != nil {
 		fmt.Printf("Error starting Simple chaincode: %s", err)
@@ -109,17 +109,34 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running " + function)
         //xx = shared.Args{1, 2} 
+	state="active"
 	// Handle different functions
 	if function == "init" {
 		return t.Init(stub, "init", args)
+	}else function == "activate" {
+		return t.activate(stub, "init", args)
+	}else function == "deactivate" {
+		return t.deactivate(stub, "init", args)
+	}
 	fmt.Println("invoke did not find func: " + function)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
+}
+func (t *SimpleChaincode) activate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	state="active"
+	err := stub.PutState("state", []byte(state))
+	return []byte("Activated"), err
+}
+func (t *SimpleChaincode) deactivate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	state="inactive"
+	err := stub.PutState("state", []byte(state))
+	return []byte("De Activated"), err
 }
 
 // Query is our entry point for queries
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
+
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
@@ -137,7 +154,9 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 	//var err error
 	fmt.Println("running write()")
 
-        for i := 0; i < 1000000; i++ {
+	sbytes, err := stub.GetState("state")
+	state= string(sbytes[:]) 
+        for i := 0; i < 1000000 && state=="active"; i++ {
 		time.Sleep(time.Second * 60)
 		t.callCC(stub , args )
 		t.callDD(stub , args )

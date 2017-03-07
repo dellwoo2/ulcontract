@@ -23,7 +23,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-//        "time"
+        "time"
 	"log"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -37,7 +37,9 @@ import (
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
-
+//*****************************************
+//* Contracts Scheduler
+var scheduler string
 //*****************************************
 //* Contract Types
 
@@ -51,6 +53,7 @@ type Account struct{
   Valuation string
 }
 type Life struct{
+ Name string
  Gender string
  Dob    string
  Smoker string
@@ -65,8 +68,19 @@ type Contract struct{
  Owner  string
  Beneficiary string
  Lf  Life
+ Status string
+ Email string
 }
 
+type History struct{
+ Methd string
+ Funct string
+ Cont Contract
+ Args []string
+ Tranid string 
+}
+
+var history map[string]History
 //*****************************************
 
 var contract Contract
@@ -121,18 +135,24 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
   contract.Term = args[5]
   contract.PaymentFrequency=args[6]
   contract.Owner=args[7]
+  contract.Lf.Name=args[8]
+  contract.Email=args[9]
+  contract.SumAssured=args[10]
   contract.Acct.Valuation="0"
   //var bin_buf bytes.Buffer
   //binary.Write( &bin_buf, binary.BigEndian, contract )
 /*************************
-	err := stub.PutState("owner", []byte(contract.owner))
-	err = stub.PutState("paymentFrequency", []byte(contract.paymentFrequency))
-	err = stub.PutState("startDate",  []byte(contract.startDate) )
-	err = stub.PutState("product", []byte(contract.product))
-	err = stub.PutState("life.smoker", []byte(contract.life.smoker))
-	err = stub.PutState("life.dob", []byte(contract.life.dob))
-	err = stub.PutState("life.gender",  []byte(contract.life.gender))
-	err = stub.PutState("account.valuation",  []byte(contract.account.valuation))
+	err := stub.PutState("owner", []byte(contract.Owner))
+	err = stub.PutState("paymentFrequency", []byte(contract.PaymentFrequency))
+	err = stub.PutState("startDate",  []byte(contract.StartDate) )
+	err = stub.PutState("product", []byte(contract.Product))
+	err = stub.PutState("life.smoker", []byte(contract.Lf.Smoker))
+	err = stub.PutState("life.dob", []byte(contract.Lf.Dob))
+	err = stub.PutState("life.gender",  []byte(contract.Lf.Gender))
+	err = stub.PutState("life.name",  []byte(contract.Lf.Name))
+	err = stub.PutState("account.valuation",  []byte(contract.Acct.Valuation))
+	err = stub.PutState("email",  []byte(contract.Email))
+	err = stub.PutState("sumassured",  []byte(contract.SumAssured))
 *********************/
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
@@ -142,6 +162,18 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if err != nil {
 		return nil, err
 	}
+//**************************************************
+// save the history
+	var h History
+	h.Methd="deploy"
+	h.Funct="init"
+	h.Tranid=time.Now().String()
+	h.Cont=contract
+	h.Args=args
+	history[h.Tranid]=h
+        b1, _ := json.Marshal(h)
+	_ = 	stub.PutState("History", b1)
+
 	return nil, nil
 }
 
@@ -166,11 +198,43 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.valuation(stub, args)
 	} else if function == "surrender" {
 		return t.surrender(stub, args)
+	} else if function == "setscheduler" {
+		return t.setscheduler(stub, args)
 	} 
 	fmt.Println("invoke did not find func: " + function)
 
+	valAsbytes, _ := stub.GetState("History")
+    	json.Unmarshal(valAsbytes , &history)
+
+	var h History
+	h.Methd="deploy"
+	h.Funct="init"
+	h.Tranid=time.Now().String()
+	h.Cont=contract
+	h.Args=args
+	history[h.Tranid]=h
+        b, _ := json.Marshal(h)
+	stub.PutState("History", b)
+
 	return nil, errors.New("Received unknown function invocation: " + function)
 }
+
+func (t *SimpleChaincode) setscheduler(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	scheduler=args[0]
+	err := 	stub.PutState("scheduler",[]byte(scheduler) )
+	return []byte("Scheduler ID set"),err
+}
+func (t *SimpleChaincode) activate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	valAsbytes, err := stub.GetState("scheduler")
+	scheduler=string(valAsbytes)
+	return []byte("Scheduler Activated"),err
+}
+func (t *SimpleChaincode) deactivate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	valAsbytes, err := stub.GetState("scheduler")
+	scheduler=string(valAsbytes)
+	return []byte("Scheduler De-activated"),err
+}
+
 func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	surr, _ := strconv.ParseFloat( args[0] , 10);
 	surrchg:=20
@@ -285,8 +349,11 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.statement(stub, args)
 	} else if function == "valuation" {
 		return t.valuation(stub, args)
-	}
-
+	} else if function == "activate" {
+		return t.activate(stub, args)
+	} else if function == "deactivate" {
+		return t.deactivate(stub, args)
+	} 
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
