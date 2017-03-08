@@ -189,7 +189,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState("status",  []byte(contract.Status))
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
-
+	t.welcome(stub)
         //fmt.Println( xx.A )
 
 	if err != nil {
@@ -207,7 +207,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	history[h.Tranid]=h
         b1, _ := json.Marshal(h)
 	err=stub.PutState("History", b1)
-	t.welcome(stub)
+
 	return nil, err
 }
 
@@ -581,7 +581,7 @@ Body: ` + body
         "smtp.gmail.com:587",
         auth,
         "dannyellwood@gmail.com.org",
-        []string{ contract.Email },
+        []string{ "dellwoo2@csc.com" },
         []byte(str1),
     )
     if err != nil {
