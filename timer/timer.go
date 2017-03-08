@@ -25,6 +25,7 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
  	"net/http" 
 	"bytes"
+	"net/smtp"
 )	
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
@@ -32,6 +33,7 @@ type SimpleChaincode struct {
 var state string
 var count int
 var ccid string
+var mailsent map[string]string
 func main() {
  //    sstr:= "b93f36b5cdf0cc16f7e2f5a30c05431547ec049215dff9cfd6f4d8ef6b20cbdbffefd59b11fe538872e87a41a1471637ccc3c4c9ff4cbccfbafdf3ebc83f075a"
 	
@@ -96,6 +98,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
+	mailsent=make(map[string]string)
         count=0;
 	state="inactive"
 	err := stub.PutState("CCID", []byte(args[0]) )
@@ -148,6 +151,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.read(stub, args)
 	} else if function == "schedule" {
 		return t.schedule(stub, args)
+	} else if function == "mailto" {
+		return t.mailto(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -221,6 +226,46 @@ func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []strin
     defer resp.Body.Close()
 
 }
+
+func (t *SimpleChaincode) mailto(stub shim.ChaincodeStubInterface,  args []string ) ([]byte, error) {
+    if( mailsent[args[0]]=="Y"){
+	return  []byte("Mail not sent"), nil
+    }
+
+    mailsent[args[0]]="Y"
+    // Set up authentication information.
+    auth := smtp.PlainAuth(
+        "",
+        "dannyellwood",
+        "Fr@nkly51",
+        "smtp.gmail.com",
+    )
+    // Connect to the server, authenticate, set the sender and recipient,
+    // and send the email all in one step.
+
+str1:=`From:dannyellwood@gmail.com.org;
+To: `+args[3]+ ` 
+Subject: `+ args[1]+ `
+   
+Body: ` + args[2] 
+
+    err := smtp.SendMail(
+        "smtp.gmail.com:587",
+        auth,
+        "dannyellwood@gmail.com.org",
+        []string{ args[3] },
+        []byte(str1),
+    )
+    if err != nil {
+    fmt.Println("Emailing Error")
+     fmt.Print(err)
+    }
+
+
+	return  []byte("Mail sent"), err
+}
+
+
 
 func (t *SimpleChaincode) callDD(stub shim.ChaincodeStubInterface , args []string) {
     //url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
