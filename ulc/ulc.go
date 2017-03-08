@@ -428,14 +428,14 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 		t.activate(stub, args)	
 
 		subject:="Your Policy is now in Force"
-		body:=`Dear Mr `+contract.Lf.Name+ ` #N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ `for your new policy #N 	we are pleased to inform you that your policy is now in force #N Many thanks`
+		body:=`Dear Mr `+contract.Lf.Name+ ` #N Thank you for your payment of $`+strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your new policy #N we are pleased to inform you that your policy is now in force #N Many thanks`
 		t.mailto(stub, subject , body)
 	}else
 	{
 		//*****************************************************
 		// email
 		subject:="Thank you for your Payment"
-		body:=`Dear Mr `+ contract.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ `for your  policy #N		Many thanks`
+		body:=`Dear Mr `+ contract.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your policy #N Many thanks`
  		t.mailto(stub, subject , body)
 	}
 
