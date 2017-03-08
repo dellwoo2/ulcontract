@@ -268,6 +268,7 @@ func (t *SimpleChaincode) journal(stub shim.ChaincodeStubInterface, args []strin
   var journal map[string]GLtran
   journal=make(map[string]GLtran)
   valAsbytes, err := stub.GetState("gltran")
+  gltran=make(map[string]GLtran)
   json.Unmarshal(valAsbytes , &gltran)
   for key, value := range gltran {
     fmt.Println("Key:", key, "Value:", value)
@@ -444,6 +445,7 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 func glPost( stub shim.ChaincodeStubInterface, glt GLtran, pid string)( error){
 	var err error
         var valAsbytes, b []byte
+  	gltran=make(map[string]GLtran)
 	valAsbytes, err = stub.GetState("gltran")
     	json.Unmarshal(valAsbytes , &gltran)
 	glt.TranID=invokeTran
