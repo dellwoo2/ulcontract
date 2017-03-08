@@ -510,6 +510,9 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 
 func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
     // Set up authentication information.
+
+	l := log.New(os.Stderr, "", 0)
+	l.Println("DE************* INIT Send Email ")
     auth := smtp.PlainAuth(
         "",
         "dannyellwood",
@@ -530,17 +533,16 @@ Account Holder:`+contract.Owner+`
 Value:`+contract.Acct.Valuation+` 
 
 Yours Sincerely, Danny `
-
-
     err = smtp.SendMail(
         "smtp.gmail.com:587",
-        auth,
+         auth,
         "dannyellwood@gmail.com.org",
         []string{ "dellwoo2@csc.com" },
         []byte(str1),
     )
     if err != nil {
-     fmt.Print(err)
+     l.Print("EMAIL ERROR=")
+     l.Print(err)
     }
 	return  []byte("Mail sent"), err
 }
