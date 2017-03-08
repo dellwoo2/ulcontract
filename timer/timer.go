@@ -246,10 +246,8 @@ func (t *SimpleChaincode) mailto(stub shim.ChaincodeStubInterface,  args []strin
 
 str1:=`From:dannyellwood@gmail.com.org;
 To: `+args[3]+ ` 
-Subject: `+ args[1]+ `;
-   
-Body: ` + strings.Replace( args[2] , "#N","\n",-1) 
-
+Subject: `+ args[1]+ "\n" + strings.Replace( args[2] , "#N","\n",-1) 
+fmt.Println("MAIL STR="+str1)
     err := smtp.SendMail(
         "smtp.gmail.com:587",
         auth,
@@ -261,9 +259,7 @@ Body: ` + strings.Replace( args[2] , "#N","\n",-1)
     fmt.Println("Emailing Error")
      fmt.Print(err)
     }
-
-
-	return  []byte("Mail sent"), err
+    return  []byte("Mail sent"), err
 }
 
 
