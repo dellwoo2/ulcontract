@@ -378,9 +378,7 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
 	//*****************************************************
 	// email
 	subject:="Your Policy has been Surrendered"
-	body:=`Dear Mr `+ contract.Lf.Name+ `
- 	Your request to surrender your policy has been accepted
- 	and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account
+	body:=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to surrender your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account
 	Many thanks`
  	t.mailto(stub, subject , body)
 
@@ -429,19 +427,14 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 		t.activate(stub, args)	
 
 		subject:="Your Policy is now in Force"
-		body:=`Dear Mr `+contract.Lf.Name+ `
- 		Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ `for your new policy 
- 		we are pleased to inform you that your policy is now in force
-		Many thanks`
+		body:=`Dear Mr `+contract.Lf.Name+ ` #N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ `for your new policy #N 	we are pleased to inform you that your policy is now in force #N Many thanks`
 		t.mailto(stub, subject , body)
 	}else
 	{
 		//*****************************************************
 		// email
 		subject:="Thank you for your Payment"
-		body:=`Dear Mr `+ contract.Lf.Name + `
- 			Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ `for your  policy
-		Many thanks`
+		body:=`Dear Mr `+ contract.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ `for your  policy #N		Many thanks`
  		t.mailto(stub, subject , body)
 	}
 
@@ -552,9 +545,7 @@ Yours Sincerely, Danny `
 func(t *SimpleChaincode) welcome(stub shim.ChaincodeStubInterface) ([]byte, error) {
 
 subject:="Thank you for your application"
-body:=`Dear Mr `+ contract.Lf.Name + ` 
- Thank you for your application, which has now been accepted
- We will activate your new Policy as soon as payment is received `
+body:=`Dear Mr `+ contract.Lf.Name + `#N Thank you for your application, which has now been accepted #N We will activate your new Policy as soon as payment is received `
 
  t.mailto(stub, subject , body)
  return nil,nil

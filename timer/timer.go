@@ -245,9 +245,9 @@ func (t *SimpleChaincode) mailto(stub shim.ChaincodeStubInterface,  args []strin
 
 str1:=`From:dannyellwood@gmail.com.org;
 To: `+args[3]+ ` 
-Subject: `+ args[1]+ `
+Subject: `+ args[1]+ `;
    
-Body: ` + args[2] 
+Body: ` + string.Replace( args[2] , "#N","\n",-1) 
 
     err := smtp.SendMail(
         "smtp.gmail.com:587",
