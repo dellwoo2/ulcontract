@@ -175,6 +175,8 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 	state= string(sbytes[:]) 
         for i := 0; i < 1000000 && state!="kill"; i++ {
 		time.Sleep(time.Duration( tx )*time.Second  )
+    		fmt.Print("Timer Iteration=")
+    		fmt.Println(i)
 		b, _ :=stub.GetState("state")
 		state= string(b)
 		if state=="active" { 
