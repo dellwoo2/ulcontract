@@ -589,6 +589,9 @@ func (t *SimpleChaincode) mailto(stub shim.ChaincodeStubInterface, subject strin
      },
      "id": 3
  }` )
+
+
+    fmt.Println("Send Email:", string(jsonStr) )
     req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
     req.Header.Set("X-Custom-Header", "myvalue")
     req.Header.Set("Content-Type", "application/json")
