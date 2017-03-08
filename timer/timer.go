@@ -187,7 +187,7 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 
 func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []string) {
     //url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
-    url :=args[1]+"/chaincode"
+    url :=args[1]
     //valAsbytes, err := stub.GetState("CCID")
     //ccstr:=string(valAsbytes)
     jsonStr := []byte( `
@@ -267,7 +267,7 @@ fmt.Println("MAIL STR="+str1)
 
 func (t *SimpleChaincode) callDD(stub shim.ChaincodeStubInterface , args []string) {
     //url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
-    url :=args[1]+"/chaincode"
+    url :=args[1]
     //valAsbytes, err := stub.GetState("CCID")
     //ccstr:=string(valAsbytes)
     jsonStr := []byte( `
