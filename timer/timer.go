@@ -177,8 +177,6 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 		time.Sleep(time.Duration( tx )*time.Second  )
     		fmt.Print("Timer Iteration=")
     		fmt.Println(i)
-		b, _ :=stub.GetState("state")
-		state= string(b)
 		if state=="active" { 
 			t.callCC(stub , args )
 			t.callDD(stub , args )
@@ -186,6 +184,7 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 	}
 	return []byte(state) , err
 }
+
 func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []string) {
     //url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
     url :=args[1]+"/chaincode"
