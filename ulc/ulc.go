@@ -254,8 +254,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.surrender(stub, args)
 	} else if function == "setscheduler" {
 		return t.setscheduler(stub, args)
-	} else if function == "journal" {
-		return t.journal(stub, args)
+	} else if function == " setJournalDone" {
+		return t. setJournalDone(stub, args)
 	} 
 	fmt.Println("invoke did not find func: " + function)
 	err=errors.New("Received unknown function invocation: " + function)
@@ -263,7 +263,21 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 
 	return nil, err 
 }
+func (t *SimpleChaincode) setJournalDone(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+  valAsbytes, err := stub.GetState("gltran")
+  gltran=make(map[string]GLtran)
+  json.Unmarshal(valAsbytes , &gltran)
+  for key, value := range gltran {
+    fmt.Println("Key:", key, "Value:", value)
+    if value.Stat=="N" {
+	value.Stat="Y"
+    }
+  }
+  b, err := json.Marshal(history)
+  stub.PutState("gltran", b)
+  return b, err
 
+}
 func (t *SimpleChaincode) journal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
   var journal map[string]GLtran
   journal=make(map[string]GLtran)
@@ -632,7 +646,9 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.deactivate(stub, args)
 	} else if function == "transactions" {
 		return t.transactions(stub, args)
-        }
+	} else if function == "journal" {
+		return t.journal(stub, args)
+	}
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
