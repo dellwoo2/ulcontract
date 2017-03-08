@@ -189,7 +189,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState("status",  []byte(contract.Status))
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
-	t.welcome(stub)
+	t.statement(stub,args)
         //fmt.Println( xx.A )
 
 	if err != nil {
