@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
         "time"
+	"strings"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
  	"net/http" 
@@ -247,7 +248,7 @@ str1:=`From:dannyellwood@gmail.com.org;
 To: `+args[3]+ ` 
 Subject: `+ args[1]+ `;
    
-Body: ` + string.Replace( args[2] , "#N","\n",-1) 
+Body: ` + strings.Replace( args[2] , "#N","\n",-1) 
 
     err := smtp.SendMail(
         "smtp.gmail.com:587",
