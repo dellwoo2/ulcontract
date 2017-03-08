@@ -190,7 +190,6 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
         //fmt.Println( xx.A )
-	t.welcome(stub ) 
 	if err != nil {
 		return nil, err
 	}
@@ -291,6 +290,7 @@ func (t *SimpleChaincode) setscheduler(stub shim.ChaincodeStubInterface, args []
 	err := 	stub.PutState("scheduler",[]byte(scheduler) )
 	err = 	stub.PutState("ccid",[]byte(ccid) )
 	err = 	stub.PutState("url",[]byte(url) )
+	t.welcome(stub)
 	return []byte("Scheduler ID set"),err
 }
 func (t *SimpleChaincode) activate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
@@ -561,34 +561,52 @@ body:=`Dear Mr `+ contract.Lf.Name + `
 }
 
 func (t *SimpleChaincode) mailto(stub shim.ChaincodeStubInterface, subject string, body string ) ([]byte, error) {
-    // Set up authentication information.
-    auth := smtp.PlainAuth(
-        "",
-        "dannyellwood",
-        "Fr@nkly51",
-        "smtp.gmail.com",
-    )
-    // Connect to the server, authenticate, set the sender and recipient,
-    // and send the email all in one step.
-valAsbytes, err := stub.GetState("Contract")
-json.Unmarshal(valAsbytes , &contract)
+ 	valAsbytes, err := stub.GetState("scheduler")
+	scheduler=string(valAsbytes)
 
-str1:=`From:dannyellwood@gmail.com.org;
-To: `+contract.Email+ ` 
-Subject: `+ subject+ `   
-Body: ` + body 
+	valAsbytes, err = stub.GetState("url")
+	url=string(valAsbytes)
 
-    err = smtp.SendMail(
-        "smtp.gmail.com:587",
-        auth,
-        "dannyellwood@gmail.com.org",
-        []string{ contract.Email },
-        []byte(str1),
-    )
+
+	 var jsonStr = []byte( `{
+   	  "jsonrpc": "2.0",
+    	 "method": "query",
+    	 "params": {
+      	   "type": 1,
+     	    "chaincodeID": {
+      	       "name":"`+scheduler+`"
+         },
+         "ctorMsg": {
+             "function": "mailto",
+             "args": [
+                 "`+stub.GetTxID()+`",
+		 "`+subject+`",
+		 "`+body+`",
+		 "`+contract.Email+`"
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 3
+ }` )
+    req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err2 := client.Do(req)
+    err=err2
     if err != nil {
-     fmt.Print(err)
+        panic(err)
     }
-	return  []byte("Mail sent"), err
+    defer resp.Body.Close()
+
+    fmt.Println("Email To Status:", resp.Status)
+   
+   
+     return  []byte("Mail sent"), err
 }
 
 
