@@ -19,18 +19,18 @@ package main
 
 import (
 	"os"
-//	"io/ioutil"
+	"io/ioutil"
 	"encoding/json"
 	"errors"
 	"fmt"
-        "time"
+ //       "time"
 	"log"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"github.com/dellwoo2/ulcontract/ulc/shared"
- //	"net/http" 
+	"net/http" 
  //   	"encoding/binary"
- //  	"bytes"
+  	"bytes"
 	"net/smtp"
 )	
 
@@ -70,8 +70,11 @@ type Contract struct{
  Lf  Life
  Status string
  Email string
+ UWstatus string
 }
 type GLtran struct{
+ TranID string
+ Ref string
  Dbacc string
  Db    string
  Cracc string
@@ -91,11 +94,11 @@ var gltran map[string]GLtran
 //*****************************************
 
 var contract Contract
-
-
 var count int
 var   xx = shared.Args{1, 2}
 var invokeTran string
+var url string
+
 func main() {
 /************
 	bonus:=121
@@ -115,11 +118,11 @@ func main() {
 	var h History
 	h.Methd="deploy"
 	h.Funct="init"
-	h.Tranid=time.Now().String()
+	h.Tranid=.GetTxID() //time.Now().String()
 	h.Cont=contract
 	h.Args=args
         for i:=0 ; i < 30 ; i++ {
-	h.Tranid=time.Now().String()
+	h.Tranid=.GetTxID() //time.Now().String()
 	history[h.Tranid]=h
 	time.Sleep(time.Millisecond)
 	}
@@ -169,9 +172,9 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
   contract.Email=args[9]
   contract.SumAssured=args[10]
   contract.Acct.Valuation="0"
-  //var bin_buf bytes.Buffer
-  //binary.Write( &bin_buf, binary.BigEndian, contract )
-
+  contract.Status="Proposal"
+// set to ready for now till UW contract is implemented
+  contract.UWstatus="Ready"
 	err := stub.PutState("owner", []byte(contract.Owner))
 	err = stub.PutState("paymentFrequency", []byte(contract.PaymentFrequency))
 	err = stub.PutState("startDate",  []byte(contract.StartDate) )
@@ -183,7 +186,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	err = stub.PutState("account.valuation",  []byte(contract.Acct.Valuation))
 	err = stub.PutState("email",  []byte(contract.Email))
 	err = stub.PutState("sumassured",  []byte(contract.SumAssured))
-
+	err = stub.PutState("status",  []byte(contract.Status))
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
 
@@ -198,19 +201,19 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	var h History
 	h.Methd="deploy"
 	h.Funct="init"
-	h.Tranid=time.Now().String()
+	h.Tranid=stub.GetTxID()  //time.Now().String()
 	h.Cont=contract
 	h.Args=args
 	history[h.Tranid]=h
         b1, _ := json.Marshal(h)
 	err=stub.PutState("History", b1)
-
+	t.welcome(stub)
 	return nil, err
 }
 
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	invokeTran=time.Now().String()
+	invokeTran=stub.GetTxID()
 	fmt.Println("invoke is running " + function)
 	l := log.New(os.Stderr, "", 0)
 
@@ -229,6 +232,10 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
         b, _ := json.Marshal(history)
 	stub.PutState("History", b)
 	//*********************************************
+	// get the contract state
+	valAsbytes, err := stub.GetState("Contract")
+    	json.Unmarshal(valAsbytes , &contract)
+
 
 	l.Println("DE************* Invoke Function")
         //xx = shared.Args{1, 2} 
@@ -249,25 +256,88 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.surrender(stub, args)
 	} else if function == "setscheduler" {
 		return t.setscheduler(stub, args)
+	} else if function == "journal" {
+		return t.journal(stub, args)
 	} 
 	fmt.Println("invoke did not find func: " + function)
+	err=errors.New("Received unknown function invocation: " + function)
 
 
-
-	return nil, errors.New("Received unknown function invocation: " + function)
+	return nil, err 
 }
+
+func (t *SimpleChaincode) journal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+  var journal map[string]GLtran
+  journal=make(map[string]GLtran)
+  valAsbytes, err := stub.GetState("gltran")
+  json.Unmarshal(valAsbytes , &gltran)
+  for key, value := range gltran {
+    fmt.Println("Key:", key, "Value:", value)
+    if value.Stat=="N" {
+	journal[key]=value
+	value.Stat="Y"
+    }
+  }
+  byt, _ := json.Marshal(journal)
+  return byt, err
+}
+
+
+
 
 func (t *SimpleChaincode) setscheduler(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	scheduler=args[0]
 	ccid:=args[1]
+        url=args[2]
 	err := 	stub.PutState("scheduler",[]byte(scheduler) )
 	err = 	stub.PutState("ccid",[]byte(ccid) )
+	err = 	stub.PutState("url",[]byte(url) )
 	return []byte("Scheduler ID set"),err
 }
 func (t *SimpleChaincode) activate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	valAsbytes, err := stub.GetState("scheduler")
 	scheduler=string(valAsbytes)
-	return []byte("Scheduler Activated"),err
+
+	valAsbytes, err = stub.GetState("url")
+	url=string(valAsbytes)
+
+
+	 var jsonStr = []byte( `{
+   	  "jsonrpc": "2.0",
+    	 "method": "invoke",
+    	 "params": {
+      	   "type": 1,
+     	    "chaincodeID": {
+      	       "name":"`+scheduler+`"
+         },
+         "ctorMsg": {
+             "function": "activate",
+             "args": [
+                 "active"
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 3
+ }` )
+    req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err2 := client.Do(req)
+    err=err2
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+
+    fmt.Println("Set Scheduler Status:", resp.Status)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("Set Scheduler Body:", string(body))
+    return []byte("Scheduler Activated"),err
 }
 func (t *SimpleChaincode) deactivate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	valAsbytes, err := stub.GetState("scheduler")
@@ -279,9 +349,6 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
 	surr, _ := strconv.ParseFloat( args[0] , 10);
 	surrchg:=20
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
-	valAsbytes, err := stub.GetState("Contract")
-    	json.Unmarshal(valAsbytes , &contract)
-
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
 	i = i - float64(surr)
 	i = i - float64(surrchg)
@@ -289,6 +356,34 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
+	//********************************************
+	//gl posting 
+	//*************************
+	// GL Posting Surrender Payment
+	var glt GLtran
+	glt.Ref="Policy Surrender Payment"
+ 	glt.Dbacc="PSUSP"
+ 	glt.Db= strconv.FormatFloat(float64(surr),  'f' , 2,  64)
+ 	glt.Cracc="BK001"
+ 	glt.Cr=strconv.FormatFloat(-float64(surr),  'f' , 2,  64)
+	glPost(stub, glt , "SUR")
+	//************************************
+	// GL Posting Surrender Charge
+	glt.Ref="Policy Surrender Charge"
+ 	glt.Dbacc="PSUSP"
+ 	glt.Db= strconv.FormatFloat(float64(surrchg),  'f' , 2,  64)
+ 	glt.Cracc="MGCHG"
+ 	glt.Cr=strconv.FormatFloat(-float64(surrchg),  'f' , 2,  64)
+	glPost(stub, glt , "SCG")
+
+	//*****************************************************
+	// email
+	subject:="Your Policy has been Surrendered"
+	body:=`Dear Mr `+ contract.Lf.Name+ `
+ 	Your request to surrender your policy has been accepted
+ 	and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account
+	Many thanks`
+ 	t.mailto(stub, subject , body)
 
 	return  []byte("surrendered"), err
 }
@@ -303,6 +398,8 @@ func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args 
 	err = 	stub.PutState("Contract", b)
 	return  []byte("Funds_allocated"), err
 }
+
+
 func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	premium, _ := strconv.ParseFloat( args[0] , 10);
 
@@ -318,27 +415,48 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 	err = 	stub.PutState("Contract", b)
 	//*************************
 	// GL Posting
-	valAsbytes, err = stub.GetState("gltran")
-    	json.Unmarshal(valAsbytes , &gltran)
 	var glt GLtran
+	glt.Ref="Premium Payment"
  	glt.Dbacc="BK001"
  	glt.Db= strconv.FormatFloat(float64(premium),  'f' , 2,  64)
  	glt.Cracc="CSUSP"
  	glt.Cr=strconv.FormatFloat(-float64(premium),  'f' , 2,  64)
- 	glt.Stat="N"
-	gltran[invokeTran]=glt
-        b, err = json.Marshal(gltran)
-	stub.PutState("gltran", b)
+	glPost(stub, glt , "PPY" )
+
+	//*************************************
+	//* Now set the policy in force 
+	if  contract.UWstatus=="Ready"{
+  		contract.Status="InForce"
+		t.activate(stub, args)	
+
+		subject:="Your Policy is now in Force"
+		body:=`Dear Mr `+contract.Lf.Name+ `
+ 		Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ `for your new policy 
+ 		we are pleased to inform you that your policy is now in force
+		Many thanks`
+		t.mailto(stub, subject , body)
+	}else
+	{
+		//*****************************************************
+		// email
+		subject:="Thank you for your Payment"
+		body:=`Dear Mr `+ contract.Lf.Name + `
+ 			Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ `for your  policy
+		Many thanks`
+ 		t.mailto(stub, subject , body)
+	}
+
 	return  []byte("applied"), err
 }
 
-func glPost( stub shim.ChaincodeStubInterface, glt GLtran)( error){
+func glPost( stub shim.ChaincodeStubInterface, glt GLtran, pid string)( error){
 	var err error
         var valAsbytes, b []byte
 	valAsbytes, err = stub.GetState("gltran")
     	json.Unmarshal(valAsbytes , &gltran)
+	glt.TranID=invokeTran
  	glt.Stat="N"
-	gltran[invokeTran]=glt
+	gltran[invokeTran+pid]=glt
         b, err = json.Marshal(gltran)
 	stub.PutState("gltran", b)
 	return   err
@@ -347,20 +465,50 @@ func glPost( stub shim.ChaincodeStubInterface, glt GLtran)( error){
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
 
-	bonus:=33
-
+	coi:=33
+        fmc:=10
+	adc:=12
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
 	valAsbytes, err := stub.GetState("Contract")
     	json.Unmarshal(valAsbytes , &contract)
 
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
-	i = i - float64(bonus)
+	i = i - float64(coi+fmc+adc)
         contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
         b, err := json.Marshal(contract)
 	err = 	stub.PutState("Contract", b)
+	//*************************
+	// GL Posting COI
+	var glt GLtran
+	glt.Ref="COI Deduction"
+ 	glt.Dbacc="PSUSP"
+ 	glt.Db= strconv.FormatFloat(float64(coi),  'f' , 2,  64)
+ 	glt.Cracc="PRESV"
+ 	glt.Cr=strconv.FormatFloat(-float64(coi),  'f' , 2,  64)
+	glPost(stub, glt , "COI")
+	//*************************
+	// GL Posting Fund Management Charge
+	glt.Ref="Fund Management Charge"
+ 	glt.Dbacc="PSUSP"
+ 	glt.Db= strconv.FormatFloat(float64(fmc),  'f' , 2,  64)
+ 	glt.Cracc="FDEXP"
+ 	glt.Cr=strconv.FormatFloat(-float64(fmc),  'f' , 2,  64)
+	glPost(stub, glt , "FMC")
+	//*************************
+	// GL Posting Admmin Charge
+	glt.Ref="Admin Charge"
+ 	glt.Dbacc="PSUSP"
+ 	glt.Db= strconv.FormatFloat(float64(adc),  'f' , 2,  64)
+ 	glt.Cracc="MGEXP"
+ 	glt.Cr=strconv.FormatFloat(-float64(adc),  'f' , 2,  64)
+	glPost(stub, glt , "ADC" )
+
 	return  []byte("processed"), err
+
 }
+
+
 func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
     // Set up authentication information.
     auth := smtp.PlainAuth(
@@ -379,17 +527,17 @@ To: dellwoo2@csc.com
 Subject: Monthly Statement;
 
 Body: Your Statement of account:
-Account Holder:`+contract.Owner+`
-Value:`+contract.Acct.Valuation+`
+Account Holder:`+contract.Owner+` 
+Value:`+contract.Acct.Valuation+` 
 
-Sincerely, Danny `
+Yours Sincerely, Danny `
 
 
     err = smtp.SendMail(
         "smtp.gmail.com:587",
         auth,
         "dannyellwood@gmail.com.org",
-        []string{"dellwoo2@csc.com" },
+        []string{ contract.Email },
         []byte(str1),
     )
     if err != nil {
@@ -397,12 +545,60 @@ Sincerely, Danny `
     }
 	return  []byte("Mail sent"), err
 }
+
+
+
+func(t *SimpleChaincode) welcome(stub shim.ChaincodeStubInterface) ([]byte, error) {
+
+subject:="Thank you for your application"
+body:=`Dear Mr `+ contract.Lf.Name + ` 
+ Thank you for your application, which has now been accepted
+ We will activate your new Policy as soon as payment is received `
+
+ t.mailto(stub, subject , body)
+ return nil,nil
+}
+
+func (t *SimpleChaincode) mailto(stub shim.ChaincodeStubInterface, subject string, body string ) ([]byte, error) {
+    // Set up authentication information.
+    auth := smtp.PlainAuth(
+        "",
+        "dannyellwood",
+        "Fr@nkly51",
+        "smtp.gmail.com",
+    )
+    // Connect to the server, authenticate, set the sender and recipient,
+    // and send the email all in one step.
+valAsbytes, err := stub.GetState("Contract")
+json.Unmarshal(valAsbytes , &contract)
+
+str1:=`From:dannyellwood@gmail.com.org;
+To: `+contract.Email+ ` 
+Subject: `+ subject+ `   
+Body: ` + body 
+
+    err = smtp.SendMail(
+        "smtp.gmail.com:587",
+        auth,
+        "dannyellwood@gmail.com.org",
+        []string{ contract.Email },
+        []byte(str1),
+    )
+    if err != nil {
+     fmt.Print(err)
+    }
+	return  []byte("Mail sent"), err
+}
+
+
+
 func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	valAsbytes, err := stub.GetState("Contract")
     	json.Unmarshal(valAsbytes , &contract)
 
 	return  []byte("Valuation="+contract.Acct.Valuation), err
 }
+
 
 
 // Query is our entry point for queries
@@ -419,10 +615,20 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.activate(stub, args)
 	} else if function == "deactivate" {
 		return t.deactivate(stub, args)
-	} 
+	} else if function == "transactions" {
+		return t.transactions(stub, args)
+        }
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
+}
+
+
+func (t *SimpleChaincode) transactions(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+  	valAsbytes, err := stub.GetState("History")
+    	json.Unmarshal(valAsbytes , &history)
+
+  return valAsbytes, err
 }
 
 // write - invoke function to write key/value pair
