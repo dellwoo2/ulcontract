@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
         "time"
-//	"strconv"
+	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
  	"net/http" 
 	"bytes"
@@ -29,7 +29,7 @@ import (
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
-var state
+var state string
 var count int
 var ccid string
 func main() {
@@ -97,8 +97,9 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
         count=0;
-
+	state="inactive"
 	err := stub.PutState("CCID", []byte(args[0]) )
+	err = stub.PutState("state", []byte(state) )
 	if err != nil {
 		return nil, err
 	}
@@ -109,14 +110,15 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("invoke is running " + function)
         //xx = shared.Args{1, 2} 
-	state="active"
 	// Handle different functions
 	if function == "init" {
 		return t.Init(stub, "init", args)
-	}else function == "activate" {
-		return t.activate(stub, "init", args)
-	}else function == "deactivate" {
-		return t.deactivate(stub, "init", args)
+	}else if function == "activate" {
+		return t.activate(stub, args)
+	}else if function == "deactivate" {
+		return t.deactivate(stub, args)
+	}else if function == "kill" {
+		return t.kill(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 
@@ -132,7 +134,11 @@ func (t *SimpleChaincode) deactivate(stub shim.ChaincodeStubInterface, args []st
 	err := stub.PutState("state", []byte(state))
 	return []byte("De Activated"), err
 }
-
+func (t *SimpleChaincode) kill(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	state="kill"
+	err := stub.PutState("state", []byte(state))
+	return []byte("scheduler killed"), err
+}
 // Query is our entry point for queries
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
@@ -151,17 +157,26 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 // Schedule - query function to call invoke methods on contract
 func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	//var key, value string
-	//var err error
-	fmt.Println("running write()")
-
+	var err error
+	var tx int64
+	fmt.Println("running set scheduler")
+	if len(args) != 3 {
+		tx=300
+	}else{
+		tx, _ = strconv.ParseInt( args[2] , 10 , 64);
+        }
 	sbytes, err := stub.GetState("state")
 	state= string(sbytes[:]) 
-        for i := 0; i < 1000000 && state=="active"; i++ {
-		time.Sleep(time.Second * 60)
-		t.callCC(stub , args )
-		t.callDD(stub , args )
+        for i := 0; i < 1000000 && state!="kill"; i++ {
+		time.Sleep(time.Duration( tx )*time.Second  )
+		b, _ :=stub.GetState("state")
+		state= string(b)
+		if state=="active" { 
+			t.callCC(stub , args )
+			t.callDD(stub , args )
+		}
 	}
-	return []byte(state) , nil
+	return []byte(state) , err
 }
 func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []string) {
     //url :="https://e9aeb13602254217bdb0e8b425c82732-vp0.us.blockchain.ibm.com:5003/chaincode"
