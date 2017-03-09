@@ -21,12 +21,12 @@ import (
 	"errors"
 	"fmt"
         "time"
-	"strings"
+//	"strings"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
  	"net/http" 
 	"bytes"
-	"net/smtp"
+//	"net/smtp"
 )	
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
@@ -96,6 +96,7 @@ func  xCC(sstr string ) {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	fmt.Println("***** Init Scheduler ********* " )
 	if len(args) != 1 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 1")
 	}
@@ -152,9 +153,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.read(stub, args)
 	} else if function == "schedule" {
 		return t.schedule(stub, args)
-	} else if function == "mailto" {
-		return t.mailto(stub, args)
-	}
+	} 
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
@@ -227,40 +226,6 @@ func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , args []strin
     fmt.Println("response Body:", string(body))
     defer resp.Body.Close()
 
-}
-
-func (t *SimpleChaincode) mailto(stub shim.ChaincodeStubInterface,  args []string ) ([]byte, error) {
-    if( mailsent[args[0]]=="Y"){
-	return  []byte("Mail not sent"), nil
-    }
-
-    mailsent[args[0]]="Y"
-    // Set up authentication information.
-    auth := smtp.PlainAuth(
-        "",
-        "dannyellwood",
-        "Fr@nkly51",
-        "smtp.gmail.com",
-    )
-    // Connect to the server, authenticate, set the sender and recipient,
-    // and send the email all in one step.
-
-str1:=`From:dannyellwood@gmail.com.org;
-To: `+args[3]+ ` 
-Subject: `+ args[1]+ "\n" + strings.Replace( args[2] , "#N","\n",-1) 
-fmt.Println("MAIL STR="+str1)
-    err := smtp.SendMail(
-        "smtp.gmail.com:587",
-        auth,
-        "dannyellwood@gmail.com.org",
-        []string{ args[3] },
-        []byte(str1),
-    )
-    if err != nil {
-    fmt.Println("Emailing Error")
-     fmt.Print(err)
-    }
-    return  []byte("Mail sent"), err
 }
 
 
