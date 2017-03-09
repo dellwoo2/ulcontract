@@ -103,6 +103,7 @@ var   xx = shared.Args{1, 2}
 var invokeTran string
 var url string
 var glmanager string
+var odsmanager string
 func main() {
 /************
 	bonus:=121
@@ -237,35 +238,40 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// get the contract state
 	valAsbytes, err := stub.GetState("Contract")
     	json.Unmarshal(valAsbytes , &contract)
-
+	var x []byte
 
 	l.Println("DE************* Invoke Function")
         //xx = shared.Args{1, 2} 
 	// Handle different functions
 	if function == "init" {
-		return t.Init(stub, "init", args)
+		x,err = t.Init(stub, "init", args)
 	} else if function == "write" {
-		return t.write(stub, args )
+		return  t.write(stub, args )
 	} else if function == "fundAllocation" {
-		return t.fundAllocation(stub, args)
+		x,err = t.fundAllocation(stub, args)
 	} else if function == "applyPremium" {
-		return t.applyPremium(stub, args)
+		x,err = t.applyPremium(stub, args)
 	} else if function == "schedule" {
-		return t.monthlyProcessing(stub, args)
-	} else if function == "valuation" {
-		return t.valuation(stub, args)
+		x,err = t.monthlyProcessing(stub, args)
 	} else if function == "surrender" {
-		return t.surrender(stub, args)
+		x,err = t.surrender(stub, args)
 	} else if function == "setscheduler" {
 		return t.setscheduler(stub, args)
 	} else if function == " setJournalDone" {
 		return t. setJournalDone(stub, args)
-	} 
-	fmt.Println("invoke did not find func: " + function)
-	err=errors.New("Received unknown function invocation: " + function)
+	}else{ 
+		fmt.Println("invoke did not find func: " + function)
+		err=errors.New("Received unknown function invocation: " + function)
+        }
+	//*************************
+	//* if we are here then we need to update the ODS
+	var ods Ods
+	ods.Cont=contract
+	ods.Tranid=invokeTran
+	ods.Posted="N"
+	Odsupdate(stub , ods , invokeTran ) 
 
-
-	return nil, err 
+	return x , err 
 }
 func (t *SimpleChaincode) setJournalDone(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
   valAsbytes, err := stub.GetState("gltran")
@@ -307,10 +313,12 @@ func (t *SimpleChaincode) setscheduler(stub shim.ChaincodeStubInterface, args []
 	ccid:=args[1]
         url=args[2]
 	glmanager=args[3]
+	odsmanager=args[4]
 	err := 	stub.PutState("scheduler",[]byte(scheduler) )
 	err = 	stub.PutState("ccid",[]byte(ccid) )
 	err = 	stub.PutState("url",[]byte(url) )
 	err = 	stub.PutState("glmanager",[]byte(glmanager) )
+	err = 	stub.PutState("odsmanager",[]byte(odsmanager) )
 	t.welcome(stub)
 	return []byte("Scheduler ID set"),err
 }
@@ -523,7 +531,50 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
     fmt.Println("GL Post Body:", string(body))
     return err
 }
+func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) {
+	valAsbytes, err := stub.GetState("odsmanager")
+	odsmanager=string(valAsbytes)
+	valAsbytes, err = stub.GetState("url")
+	url=string(valAsbytes)
+        b, err := json.Marshal(ods)
 
+	 var jsonStr = []byte( `{
+   	  "jsonrpc": "2.0",
+    	 "method": "invoke",
+    	 "params": {
+      	   "type": 1,
+     	    "chaincodeID": {
+      	       "name":"`+odsmanager+`"
+         },
+         "ctorMsg": {
+             "function": "update",
+             "args": [
+                 "`+ string(b) +`" 
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 3
+ }` )
+    req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err2 := client.Do(req)
+    err=err2
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+
+    fmt.Println("ODS Update Status:", resp.Status)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("ODS Update Body:", string(body))
+    return err
+}
 
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
