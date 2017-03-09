@@ -23,7 +23,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
- //       "time"
+ //       "time" 
+	"strings"
 	"log"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -320,7 +321,8 @@ func (t *SimpleChaincode) setscheduler(stub shim.ChaincodeStubInterface, args []
 	err = 	stub.PutState("ccid",[]byte(ccid) )
 	err = 	stub.PutState("url",[]byte(url) )
 	err = 	stub.PutState("glmanager",[]byte(glmanager) )
-	err = 	stub.PutState("commsmanager",[]byte(commsmanager) )
+	err = 	stub.PutState("odsmanager",[]byte(odsmanager) )
+
 
 	t.welcome(stub)
 	return []byte("Scheduler ID set"),err
@@ -496,7 +498,8 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
 	valAsbytes, err = stub.GetState("url")
 	url=string(valAsbytes)
         b, err := json.Marshal(glt)
-
+	
+	s:=strings.Replace(string(b), "\"", "\\\"", -1)
 	 var jsonStr = []byte( `{
    	  "jsonrpc": "2.0",
     	 "method": "invoke",
@@ -508,7 +511,7 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
          "ctorMsg": {
              "function": "updateT",
              "args": [
-                 "`+ string(b) +`" 
+                 "`+ s +`" 
              ]
          },
          "secureContext": "admin"
@@ -540,7 +543,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
 	valAsbytes, err = stub.GetState("url")
 	url=string(valAsbytes)
         b, err := json.Marshal(ods)
-
+	s:=strings.Replace(string(b), "\"", "\\\"", -1)
 	 var jsonStr = []byte( `{
    	  "jsonrpc": "2.0",
     	 "method": "invoke",
@@ -552,7 +555,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
          "ctorMsg": {
              "function": "update",
              "args": [
-                 "`+ string(b) +`" 
+                 "`+ s +`" 
              ]
          },
          "secureContext": "admin"
@@ -631,7 +634,7 @@ func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []str
     // Set up authentication information.
 
 	l := log.New(os.Stderr, "", 0)
-	l.Println("DE************* INIT Send Email ")
+	l.Println("DE*************Send Email ")
     auth := smtp.PlainAuth(
         "",
         "dannyellwood",
