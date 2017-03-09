@@ -54,6 +54,9 @@ var count int
 var ccid string
 var timerccid string
 var startInit string
+var odsmanager string
+var glmanager string
+
 func load(w http.ResponseWriter, r *http.Request) {
   title := r.URL.Path[len("/load/"):]
 fmt.Print("title="+title)
@@ -300,7 +303,9 @@ func setScheduler(  )(string){
              "args": [
                  "`+timerccid+`",
                  "`+ccid+`",
-                 "`+url+`"
+                 "`+url+`",
+                 "`+glmanager+`",
+                 "`+odsmanager+`"
              ]
          },
          "secureContext": "admin"
@@ -430,6 +435,8 @@ user = cfg.Section("").Key("USER").String()
 secret = cfg.Section("").Key("SECRET").String()
 schedule_interval = cfg.Section("").Key("SCHEDULE").String()
 startInit= cfg.Section("").Key("START_SCHEDULE").String()
+glmanager= cfg.Section("").Key("GL_MANAGER").String()
+odsmanager= cfg.Section("").Key("ODS_MANAGER").String()
 fmt.Print(err)
 fmt.Print(url)
 fmt.Print(user)
