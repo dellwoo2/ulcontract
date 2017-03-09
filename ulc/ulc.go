@@ -104,6 +104,7 @@ var invokeTran string
 var url string
 var glmanager string
 var odsmanager string
+var commsmanager string
 func main() {
 /************
 	bonus:=121
@@ -314,11 +315,13 @@ func (t *SimpleChaincode) setscheduler(stub shim.ChaincodeStubInterface, args []
         url=args[2]
 	glmanager=args[3]
 	odsmanager=args[4]
+	commsmanager=args[5]
 	err := 	stub.PutState("scheduler",[]byte(scheduler) )
 	err = 	stub.PutState("ccid",[]byte(ccid) )
 	err = 	stub.PutState("url",[]byte(url) )
 	err = 	stub.PutState("glmanager",[]byte(glmanager) )
-	err = 	stub.PutState("odsmanager",[]byte(odsmanager) )
+	err = 	stub.PutState("commsmanager",[]byte(commsmanager) )
+
 	t.welcome(stub)
 	return []byte("Scheduler ID set"),err
 }
@@ -687,7 +690,7 @@ func (t *SimpleChaincode) mailto(stub shim.ChaincodeStubInterface, subject strin
     	 "params": {
       	   "type": 1,
      	    "chaincodeID": {
-      	       "name":"`+scheduler+`"
+      	       "name":"`+commsmanager+`"
          },
          "ctorMsg": {
              "function": "mailto",
