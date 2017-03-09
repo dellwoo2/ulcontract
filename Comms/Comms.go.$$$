@@ -51,18 +51,17 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if len(args) != 1 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 1")
-	}
+	fmt.Println("***** Init Comms  ********* "+ function )
 	mailsent=make(map[string]string)
         count=0;
 	state="inactive"
-	err = stub.PutState("state", []byte(state) )
-	return nil, nil
+	err := stub.PutState("state", []byte(state) )
+	return nil, err
 }
 
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	fmt.Println("***** Invoke ********* "+ function )
 	fmt.Println("invoke is running " + function)
         //xx = shared.Args{1, 2} 
 	// Handle different functions

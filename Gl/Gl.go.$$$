@@ -105,10 +105,8 @@ func (t *SimpleChaincode) updateT(stub shim.ChaincodeStubInterface, args []strin
 
 	var gt GLtran
   	json.Unmarshal([]byte(args[0]) , &gt)
- 	for key, value := range journal {
-	    fmt.Println("Update Tran:" + string(args[0]) )
-		gltran[gt.TranID]=gt
-    	}
+    	fmt.Println("Update Tran:" + string(args[0]) )
+	gltran[gt.TranID]=gt
  	byt, _ := json.Marshal(gltran)
 	err = stub.PutState("gltran", byt)
 	fmt.Println(err)

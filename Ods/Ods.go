@@ -88,6 +88,7 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	fmt.Println("***** Init ODS Manager ********* ")
 	state="inactive"
 	transactions=make(map[string]Ods)
  	byt, _ := json.Marshal(transactions)
@@ -102,6 +103,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	fmt.Println("***** Invoke ********* "+ function )
 	for i:=0 ; i<=100 && locked== true; i++ {
 	    time.Sleep(time.Millisecond * 20 )	
 	}

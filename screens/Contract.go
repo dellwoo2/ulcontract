@@ -56,7 +56,7 @@ var timerccid string
 var startInit string
 var odsmanager string
 var glmanager string
-
+var commsmanager string
 func load(w http.ResponseWriter, r *http.Request) {
   title := r.URL.Path[len("/load/"):]
 fmt.Print("title="+title)
@@ -305,7 +305,8 @@ func setScheduler(  )(string){
                  "`+ccid+`",
                  "`+url+`",
                  "`+glmanager+`",
-                 "`+odsmanager+`"
+                 "`+odsmanager+`",
+		 "`+commsmanager+`"
              ]
          },
          "secureContext": "admin"
@@ -437,6 +438,8 @@ schedule_interval = cfg.Section("").Key("SCHEDULE").String()
 startInit= cfg.Section("").Key("START_SCHEDULE").String()
 glmanager= cfg.Section("").Key("GL_MANAGER").String()
 odsmanager= cfg.Section("").Key("ODS_MANAGER").String()
+commsmanager= cfg.Section("").Key("COMMS_MANAGER").String()
+
 fmt.Print(err)
 fmt.Print(url)
 fmt.Print(user)

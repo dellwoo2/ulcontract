@@ -104,6 +104,7 @@ var invokeTran string
 var url string
 var glmanager string
 var odsmanager string
+var commsmanager string
 func main() {
 /************
 	bonus:=121
@@ -150,7 +151,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
         count=0;
  	//xx = &shared.Args{1, 2} 
 	l := log.New(os.Stderr, "", 0)
-	l.Println("DE************* INIT CHAINCODE")
+	l.Println("*************INIT CHAINCODE Unit Linked ****************")
 /****
  gender 0
  dob    1
@@ -238,13 +239,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// get the contract state
 	valAsbytes, err := stub.GetState("Contract")
     	json.Unmarshal(valAsbytes , &contract)
+	var x []byte
 
-
-	l.Println("DE************* Invoke Function")
+	l.Println("DE************* Invoke Function "+ function )
         //xx = shared.Args{1, 2} 
 	// Handle different functions
 	if function == "init" {
-		x,err := t.Init(stub, "init", args)
+		x,err = t.Init(stub, "init", args)
 	} else if function == "write" {
 		return  t.write(stub, args )
 	} else if function == "fundAllocation" {
@@ -314,11 +315,13 @@ func (t *SimpleChaincode) setscheduler(stub shim.ChaincodeStubInterface, args []
         url=args[2]
 	glmanager=args[3]
 	odsmanager=args[4]
+	commsmanager=args[5]
 	err := 	stub.PutState("scheduler",[]byte(scheduler) )
 	err = 	stub.PutState("ccid",[]byte(ccid) )
 	err = 	stub.PutState("url",[]byte(url) )
 	err = 	stub.PutState("glmanager",[]byte(glmanager) )
-	err = 	stub.PutState("odsmanager",[]byte(odsmanager) )
+	err = 	stub.PutState("commsmanager",[]byte(commsmanager) )
+
 	t.welcome(stub)
 	return []byte("Scheduler ID set"),err
 }
@@ -556,6 +559,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
      },
      "id": 3
  }` )
+    fmt.Println("ODS REQ="+jsonStr)
     req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
     req.Header.Set("X-Custom-Header", "myvalue")
     req.Header.Set("Content-Type", "application/json")
@@ -687,7 +691,7 @@ func (t *SimpleChaincode) mailto(stub shim.ChaincodeStubInterface, subject strin
     	 "params": {
       	   "type": 1,
      	    "chaincodeID": {
-      	       "name":"`+scheduler+`"
+      	       "name":"`+commsmanager+`"
          },
          "ctorMsg": {
              "function": "mailto",

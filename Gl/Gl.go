@@ -62,6 +62,7 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	fmt.Println("***** Init GL Manager ********* ")
 	gltran=make(map[string]GLtran)
  	byt, _ := json.Marshal(gltran)
 	err := stub.PutState("gltran", byt)
@@ -76,6 +77,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	fmt.Println("***** Invoke ********* "+ function )
 	for i:=0 ; i<=100 && locked== true; i++ {
 	    time.Sleep(time.Millisecond * 20 )	
 	}
