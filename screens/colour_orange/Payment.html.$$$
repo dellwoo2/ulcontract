@@ -15,7 +15,7 @@
       <div id="logo">
         <div id="logo_text">
           <!-- class="logo_colour", allows you to change the colour of the text -->
-          <h1><a href="index.html">colour<span class="logo_colour">orange</span></a></h1>
+          <h1><a href="index.html">Insurance on<span class="logo_colour">Blockchain</span></a></h1>
           <h2>The first ever insurance on a Blockchain</h2>
         </div>
       </div>
@@ -59,7 +59,7 @@
       </div>
       <div id="content">
            <h2>Enter Details</h2>
-		<form action="http://127.0.0.1:8080/process/ method="post" enctype="application/x-www-form-urlencoded">
+		<form action="http://127.0.0.1:8080/process/pay method="get" enctype="application/x-www-form-urlencoded">
           <div class="form_settings">
 			<p><span>Payment Amount</span><input type="text" name="pay" id="pay" value=""/></p>
            		<p style="padding-top: 15px"><span>&nbsp;</span><input class="submit" type="submit" name="name" value="Make Payment" /></p>

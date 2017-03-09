@@ -69,6 +69,7 @@
           		<p><span>Gender</span><select id="gender" name="gender"><option value="">Select</option><option value="M">Male</option><option value="F">Female</option></select></p>
        			<p><span>Smoker</span><select id="smoker" name="smoker"><option value="">Select</option><option value="Y">Yes</option><option value="F">No</option></select></p>
 			<p><span>Sum Insured</span><input type="text" name="si" id="si" value=""/></p>
+			<p><span>Start Date</span><input type="text" name="start" id="start" value=""/></p>
 			<p><span>Term of Policy</span><input type="text" name="term" id="term" value=""/></p>
           		<p><span>Payment Frequency</span><select id="freq" name="freq"><option value="">Select</option><option value="M">Monthly</option><option value="Y">Yearly</option></select></p>
 			<p><span>Beneficiary ID</span><input type="text" name="beneficiary" id="beneficiary" value=""/></p>

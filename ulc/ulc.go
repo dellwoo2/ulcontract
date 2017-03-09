@@ -98,7 +98,7 @@ var count int
 var   xx = shared.Args{1, 2}
 var invokeTran string
 var url string
-
+var glmanager string
 func main() {
 /************
 	bonus:=121
@@ -302,12 +302,15 @@ func (t *SimpleChaincode) setscheduler(stub shim.ChaincodeStubInterface, args []
 	scheduler=args[0]
 	ccid:=args[1]
         url=args[2]
+	glmanager=args[3]
 	err := 	stub.PutState("scheduler",[]byte(scheduler) )
 	err = 	stub.PutState("ccid",[]byte(ccid) )
 	err = 	stub.PutState("url",[]byte(url) )
+	err = 	stub.PutState("glmanager",[]byte(glmanager) )
 	t.welcome(stub)
 	return []byte("Scheduler ID set"),err
 }
+
 func (t *SimpleChaincode) activate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	valAsbytes, err := stub.GetState("scheduler")
 	scheduler=string(valAsbytes)
@@ -467,8 +470,56 @@ func glPost( stub shim.ChaincodeStubInterface, glt GLtran, pid string)( error){
 	gltran[invokeTran+pid]=glt
         b, err = json.Marshal(gltran)
 	stub.PutState("gltran", b)
+ 	err=Glupdate(stub, glt , pid)
 	return   err
 }
+func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error) {
+	valAsbytes, err := stub.GetState("glmanager")
+	glmanager=string(valAsbytes)
+
+
+	valAsbytes, err = stub.GetState("url")
+	url=string(valAsbytes)
+        b, err := json.Marshal(glt)
+
+	 var jsonStr = []byte( `{
+   	  "jsonrpc": "2.0",
+    	 "method": "invoke",
+    	 "params": {
+      	   "type": 1,
+     	    "chaincodeID": {
+      	       "name":"`+glmanager+`"
+         },
+         "ctorMsg": {
+             "function": "updateT",
+             "args": [
+                 "`+ string(b) +`" 
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 3
+ }` )
+    req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err2 := client.Do(req)
+    err=err2
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+
+    fmt.Println("GL Post Status:", resp.Status)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("GL Post Body:", string(body))
+    return err
+}
+
 
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 
