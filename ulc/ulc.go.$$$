@@ -38,7 +38,7 @@ import (
 type SimpleChaincode struct {
 }
 //*****************************************
-//* Contracts Scheduler
+//* Contract scheduler 
 var scheduler string
 //*****************************************
 //* Contract Types
@@ -88,7 +88,10 @@ type History struct{
  Args []string
  Tranid string 
 }
-
+type Ods struct{
+ Cont Contract
+ Tranid string 
+}
 var history map[string]History
 var gltran map[string]GLtran
 //*****************************************
@@ -517,7 +520,7 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
     fmt.Println("GL Post Status:", resp.Status)
     body, _ := ioutil.ReadAll(resp.Body)
     fmt.Println("GL Post Body:", string(body))
-    return []byte("Transaction posted"),err
+    return err
 }
 
 

@@ -38,7 +38,7 @@ import (
 type SimpleChaincode struct {
 }
 //*****************************************
-//* Contracts Scheduler
+//* Contract scheduler 
 var scheduler string
 //*****************************************
 //* Contract Types
@@ -88,7 +88,11 @@ type History struct{
  Args []string
  Tranid string 
 }
-
+type Ods struct{
+ Cont Contract
+ Tranid string 
+ Posted string
+}
 var history map[string]History
 var gltran map[string]GLtran
 //*****************************************
