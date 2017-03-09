@@ -152,7 +152,9 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	if function == "read" { //read a variable
 		return t.read(stub, args)
 	} else if function == "schedule" {
-		return t.schedule(stub, args)
+		go t.schedule(stub, args)
+		return nil, nil 
+
 	} 
 	fmt.Println("query did not find func: " + function)
 
