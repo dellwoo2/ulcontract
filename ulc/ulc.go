@@ -151,7 +151,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
         count=0;
  	//xx = &shared.Args{1, 2} 
 	l := log.New(os.Stderr, "", 0)
-	l.Println("DE************* INIT CHAINCODE")
+	l.Println("*************INIT CHAINCODE Unit Linked ****************")
 /****
  gender 0
  dob    1
@@ -241,7 +241,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
     	json.Unmarshal(valAsbytes , &contract)
 	var x []byte
 
-	l.Println("DE************* Invoke Function")
+	l.Println("DE************* Invoke Function "+ function )
         //xx = shared.Args{1, 2} 
 	// Handle different functions
 	if function == "init" {
@@ -559,6 +559,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
      },
      "id": 3
  }` )
+    fmt.Println("ODS REQ="+string(jsonStr))
     req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
     req.Header.Set("X-Custom-Header", "myvalue")
     req.Header.Set("Content-Type", "application/json")
