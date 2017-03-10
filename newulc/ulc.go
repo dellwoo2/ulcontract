@@ -181,7 +181,7 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
   	policy.Cont.SumAssured=args[10]
   	policy.Cont.Acct.Valuation="0"
   	policy.Cont.Status="PR"
-  	policy.Cont.ContID=args[11]
+
 	// set to ready for now till UW contract is implemented
   	policy.Cont.UWstatus="Ready"
 
