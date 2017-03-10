@@ -94,6 +94,11 @@ type Ods struct{
  Tranid string 
  Posted string
 }
+type Policy struct{
+	Cont Contract
+	Hist map[string]History
+
+}
 var history map[string]History
 var gltran map[string]GLtran
 //*****************************************

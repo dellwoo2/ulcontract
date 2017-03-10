@@ -350,7 +350,7 @@ func startScheduler( )(string){
          "ctorMsg": {
              "function": "schedule",
              "args": [
-                 "`+timerccid+`","`+url+`","`+ schedule_interval+`" 
+                 "`+ccid+`","`+url+`","`+ schedule_interval+`" 
              ]
          },
          "secureContext": "admin"

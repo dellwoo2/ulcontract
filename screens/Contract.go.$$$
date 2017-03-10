@@ -305,7 +305,7 @@ func setScheduler(  )(string){
                  "`+ccid+`",
                  "`+url+`",
                  "`+glmanager+`",
-                 "`+odsmanager+`,"
+                 "`+odsmanager+`",
 		 "`+commsmanager+`"
              ]
          },
