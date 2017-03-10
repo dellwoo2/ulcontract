@@ -31,6 +31,7 @@ type Life struct{
  Smoker string
 }
 type Contract struct{
+ ContID string
  Acct Account
  Product string
  StartDate string
@@ -57,24 +58,7 @@ var startInit string
 var odsmanager string
 var glmanager string
 var commsmanager string
-func load(w http.ResponseWriter, r *http.Request) {
-  title := r.URL.Path[len("/load/"):]
-fmt.Print("title="+title)
-str:=`<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<title>Go Web Programming</title>
-</head>
-<body>
-<form action="http://127.0.0.1:8080/process?hello=world&thread=123" method="post" enctype="application/x-www-form-urlencoded">
-<input type="text" name="hello" value="sau sheong"/>
-<input type="text" name="post" value="456"/>
-<input type="submit"/>
-</form>
-</body>
-</html>`
-fmt.Fprintln(w, str)
-}
+
 type Page struct {
     Title string
     Body  []byte
@@ -146,18 +130,12 @@ fmt.Print("calling process\n")
 		 cont.StartDate=r.FormValue("start")
 		 cont.Beneficiary=r.FormValue("beneficiary")
 		 cont.Email=r.FormValue("email")
-		 ccid=createContract(cont)
+		 cont.ContID=createContract(cont)
 	 	 //var cm map[string]string
 		 x:=int64(count)
 		 cm["000" + strconv.FormatInt( x ,10)]=ccid
 		 count++
 		 fmt.Println(ccid)
-		 timerccid=createScheduler( ccid )
-		 time.Sleep(time.Second * 3 )
-		 setScheduler()
-		 if startInit =="Y"{
-		 	go startScheduler()
-                 }
         	title="EnterContract.html"
            } else {
 		fmt.Print("Update existing contract")
@@ -217,7 +195,9 @@ func createContract( cont Contract)(string){
 	"\""+ cont.Lf.Name +"\","+
 	"\""+ cont.Email +"\"," +
 	"\""+ cont.SumAssured +"\"" 
-  var jsonStr = []byte( `{"jsonrpc":"2.0","method":"deploy","params":{"type":1,"chaincodeID":{"path": "https://github.com/dellwoo2/ulcontract/ulc"},"ctorMsg":{"function":"init","args":[`+args +`]},"secureContext":"admin"},"id":1}` ) 
+  var jsonStr = []byte( `{"jsonrpc":"2.0","method":"invoke","params":
+				{"type":1,"chaincodeID":{
+				"path": "https://github.com/dellwoo2/ulcontract/ulc"},"ctorMsg":{"function":"NewPolicy","args":[`+args +`]},"secureContext":"admin"},"id":1}` ) 
   fmt.Println(string(jsonStr))
 
    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
@@ -248,48 +228,12 @@ func createContract( cont Contract)(string){
 }`)
 *********************/
 i:= strings.LastIndex( string(body) , "message\":\"" )
-fmt.Println("CCID="+ string(body)[i+10:i+138])
- ccid=string(body)[i+10:i+138]
- return ccid
+fmt.Println("CONTRACT ID="+ string(body)[i+10:i+36])
+ contractId:=string(body)[i+10:i+36]
+ return contractId
 }
 
-func createScheduler( ccid string )(string){
-  var jsonStr = []byte( `{"jsonrpc": "2.0","method": "deploy",
-     "params": {
-         "type": 1,
-         "chaincodeID": {
-             "path": "https://github.com/dellwoo2/ulcontract/timer"
-         },
-         "ctorMsg": {
-             "function": "init",
-             "args": [
-                  "`+ccid+`"] },"secureContext":"admin"},"id": 1}`)
-
-    fmt.Println("Timer DEPLOY:", string(jsonStr) )
-    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-    req.Header.Set("X-Custom-Header", "myvalue")
-    req.Header.Set("Content-Type", "application/json")
-    //req.Header.Set("Postman-Token", "")
-    req.Header.Set("Cache-Control", "no-cache")
-    req.Header.Set("accept", "application/json")
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        panic(err)
-    }
-    defer resp.Body.Close()
-
-    fmt.Println("Timer Status:", resp.Status)
-    body, _ := ioutil.ReadAll(resp.Body)
-    fmt.Println("TimerBody:", string(body))
-
-    i:= strings.LastIndex( string(body) , "message\":\"" )
-    fmt.Println("TIMER CCID="+ string(body)[i+10:i+138])
-    timerccid=string(body)[i+10:i+138]
-    return timerccid
-}
-
-func setScheduler(  )(string){
+func activate(   )(string){
   var jsonStr = []byte( `{
      "jsonrpc": "2.0",
      "method": "invoke",
@@ -299,14 +243,9 @@ func setScheduler(  )(string){
              "name":"`+ccid+`"
          },
          "ctorMsg": {
-             "function": "setscheduler",
+             "function": "activate",
              "args": [
-                 "`+timerccid+`",
-                 "`+ccid+`",
-                 "`+url+`",
-                 "`+glmanager+`",
-                 "`+odsmanager+`",
-		 "`+commsmanager+`"
+                 "`+ccid+`"
              ]
          },
          "secureContext": "admin"
@@ -314,7 +253,7 @@ func setScheduler(  )(string){
      "id": 3
  }` )
 
-    fmt.Println("Set Timer:", string(jsonStr) )
+    fmt.Println("Payment:", string(jsonStr) )
     req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
     req.Header.Set("X-Custom-Header", "myvalue")
     req.Header.Set("Content-Type", "application/json")
@@ -328,59 +267,13 @@ func setScheduler(  )(string){
     }
     defer resp.Body.Close()
 
-    fmt.Println("Set Scheduler Status:", resp.Status)
+    fmt.Println("activate  Status:", resp.Status)
     body, _ := ioutil.ReadAll(resp.Body)
-    fmt.Println("SEt Scheduler Body:", string(body))
-    return timerccid
+    fmt.Println(" activate Response:", string(body))
+    return ccid
+
+
 }
-
-func startScheduler( )(string){
-    e:="F"
-  for e=="F" {
-    time.Sleep(time.Second * 10 )
-    fmt.Println("****STARTING SCHEDULER****")
-    var jsonStr = []byte( `{
-     "jsonrpc": "2.0",
-     "method": "query",
-     "params": {
-         "type": 1,
-         "chaincodeID": {
-             "name":"` +timerccid+ `"
-         },
-         "ctorMsg": {
-             "function": "schedule",
-             "args": [
-                 "`+ccid+`","`+url+`","`+ schedule_interval+`" 
-             ]
-         },
-         "secureContext": "admin"
-     }, "id": 3 }` )
-
-    fmt.Println("Start Scheduler Request:"+string(jsonStr))
-    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
-    req.Header.Set("X-Custom-Header", "myvalue")
-    req.Header.Set("Content-Type", "application/json")
-    //req.Header.Set("Postman-Token", "")
-    req.Header.Set("Cache-Control", "no-cache")
-    req.Header.Set("accept", "application/json")
-    client := &http.Client{}
-    resp, err := client.Do(req)
-    if err != nil {
-        panic(err)
-    }
-    defer resp.Body.Close()
-
-    fmt.Println("STart Scheduler Status:", resp.Status)
-    body, _ := ioutil.ReadAll(resp.Body)
-    fmt.Println("Set Scheduler Body:", string(body))
-    if strings.Index(string(body),"Failed to launch chaincode") == -1 {
-	e="T"
-    }
- }
-
-    return timerccid
-}
-
 func payment(  payment string  )(string){
   var jsonStr = []byte( `{
      "jsonrpc": "2.0",
@@ -418,7 +311,7 @@ func payment(  payment string  )(string){
     fmt.Println("Payment Status:", resp.Status)
     body, _ := ioutil.ReadAll(resp.Body)
     fmt.Println("Payment Response:", string(body))
-    return timerccid
+    return ccid
 }
 
 
@@ -434,11 +327,11 @@ url = cfg.Section("").Key("URL1").String()
 rurl = cfg.Section("").Key("REGISTER").String()
 user = cfg.Section("").Key("USER").String()
 secret = cfg.Section("").Key("SECRET").String()
-schedule_interval = cfg.Section("").Key("SCHEDULE").String()
-startInit= cfg.Section("").Key("START_SCHEDULE").String()
+schedule_interval = cfg.Section("").Key("SCHEDULE_INTERVAL").String()
 glmanager= cfg.Section("").Key("GL_MANAGER").String()
 odsmanager= cfg.Section("").Key("ODS_MANAGER").String()
 commsmanager= cfg.Section("").Key("COMMS_MANAGER").String()
+ccid= cfg.Section("").Key("CCID").String()
 
 fmt.Print(err)
 fmt.Print(url)
@@ -449,7 +342,6 @@ t:=time.Now()
 fmt.Println(t.String())
 http.HandleFunc("/process/", process)
 http.Handle("/process/style/", http.StripPrefix("/process/style/", http.FileServer(http.Dir("/Go/src/github.com/dellwoo2/ulcontract/screens/style"))))
-http.HandleFunc("/load/", load)
 http.HandleFunc("/edit/", editHandler)
 server.ListenAndServe()
 }

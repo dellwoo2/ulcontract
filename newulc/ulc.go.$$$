@@ -101,7 +101,7 @@ type Policy struct{
 
 //var history map[string]History
 var gltran map[string]GLtran
-var policies map[string]Policy
+var policies map[string]string
 var lock map[string]string
 //*****************************************
 
@@ -148,7 +148,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 //***********************************************
 //* Create a newpolicy
-func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []string) ([]byte, error) {
 	if len(args) != 12 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 12")
 	}
@@ -157,7 +157,13 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface, function s
 	l.Println("************* Unit Linked  New Policy****************")
 	l.Println("Policy ID="+stub.GetTxID())
   	var policy Policy 
-
+	if policies == nil {
+	  policies=make(map[string]string)
+	  //*****************************************
+	  // get the mal listing all policies  
+	  vb, _ := stub.GetState("policies")
+    	  json.Unmarshal(vb , &policies)
+         }
 	//*****************************************************
 	//* set contract number to transaction id for now
 	policy.Cont.ContID=stub.GetTxID()
@@ -174,8 +180,8 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface, function s
   	policy.Cont.Email=args[9]
   	policy.Cont.SumAssured=args[10]
   	policy.Cont.Acct.Valuation="0"
-  	policy.Cont.Status="Proposal"
-  	policy.Cont.ContID=args[11]
+  	policy.Cont.Status="PR"
+
 	// set to ready for now till UW contract is implemented
   	policy.Cont.UWstatus="Ready"
 
@@ -195,15 +201,19 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface, function s
 	h.Args=args
 	policy.Hist[h.Tranid]=h
 
-	policies=make(map[string]Policy)
-	policies[policy.Cont.ContID]=policy
+	policies[policy.Cont.ContID]=policy.Cont.Status
         b, err := json.Marshal(policy)
 	err = 	stub.PutState(policy.Cont.ContID, b)
+	//*****************************************
+	//* Save the stateof  the policies map
+        b, err = json.Marshal(policies)
+	err = 	stub.PutState("policies", b)
+
 	if err != nil {
 		return nil, err
 	}
 	t.welcome(stub, policy)
-	return nil, err
+	return []byte("Policy Added"), err
 }
 
 // Invoke isur entry point to invoke a chaincode function
@@ -247,6 +257,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		_ ,err = t.deactivate(stub, args )
 	} else if function == " setJournalDone" {
 		return t. setJournalDone(stub, args)
+	} else if function == " NewPolicy" {
+		return t. NewPolicy(stub, args)
 	}else{ 
 		fmt.Println("invoke did not find func: " + function)
 		err=errors.New("Received unknown function invocation: " + function)
@@ -261,9 +273,15 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 
         //*****************************
         // save policy sate 
-	policies[policy.Cont.ContID]=policy
         b, err := json.Marshal(policy)
 	err = 	stub.PutState(policy.Cont.ContID, b)
+
+	//**********************************
+	//* Save Ploicies map with new policy status
+        policies[policy.Cont.ContID]=policy.Cont.Status
+        b, err = json.Marshal(policies)
+	err = 	stub.PutState("policies", b)
+
 	if err != nil {
 		return nil, err
 	}
@@ -311,7 +329,7 @@ func (t *SimpleChaincode) activate(stub shim.ChaincodeStubInterface, args []stri
 
 	valAsbytes, err = stub.GetState("url")
 	url=string(valAsbytes)
-	stub.PutState("ccid" , []bytes(args[0]))
+	stub.PutState("ccid" , []byte(args[0]))
 
 	 var jsonStr = []byte( `{
    	  "jsonrpc": "2.0",
@@ -452,7 +470,9 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 		body:=`Dear Mr `+ contract.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your policy #N Many thanks`
  		t.mailto(stub, subject , body, policy )
 	}
+	contract.Status="IF"
 	policy.Cont=contract
+
 	return  policy, err
 }
 
@@ -563,8 +583,25 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
     return err
 }
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	var err error
+   //Iterate over the contracts & process all that are in force
+        for key , value := range policies {
+		if value == "IF" {
+		  var policy Policy
+		  policy.Hist=make(map[string]History)
+		  //*****************************************
+		  // get Contract state 
+		  valAsbytes, _ := stub.GetState(key)
+    		  json.Unmarshal(valAsbytes , &policy)
 
-return nil , nil
+		  policy , err = t.ProcessPolicy(stub, args , policy)
+
+		  policies[policy.Cont.ContID]=policy.Cont.Status
+        	  b, _ := json.Marshal(policy)
+		  err =	stub.PutState(key , b)
+	        }
+	}
+	return nil , err
 }
 
 func (t *SimpleChaincode) ProcessPolicy(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {

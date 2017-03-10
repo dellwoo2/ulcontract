@@ -88,7 +88,7 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	fmt.Println("***** Invoke ********* "+ function )
+	fmt.Println("***** Init ODS Manager ********* ")
 	state="inactive"
 	transactions=make(map[string]Ods)
  	byt, _ := json.Marshal(transactions)
@@ -115,8 +115,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.Init(stub, "init", args)
 	}else if function == "update" {
 		return t.update(stub, args)
-	}else if function == "journal" {
-		return t.journal(stub, args)
+	}else if function == "Crtjournal" {
+		return t.Crtjournal(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 	locked=false
@@ -140,7 +140,7 @@ func (t *SimpleChaincode) update(stub shim.ChaincodeStubInterface, args []string
 	return []byte("ODS Updated"), err
 }
 
-func (t *SimpleChaincode) journal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Crtjournal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	locked=true
 	valAsbytes, err := stub.GetState("transactions")
   	transactions=make(map[string]Ods)
@@ -159,6 +159,10 @@ func (t *SimpleChaincode) journal(stub shim.ChaincodeStubInterface, args []strin
 	err = stub.PutState("transactions", byt)
  	jb, _ := json.Marshal(journal)
 	locked=false
+	jb, _ := json.Marshal(journal)
+	invokeTran:=stub.GetTxID()
+	err = stub.PutState(invokeTran, jb)
+
 	return jb , err
 }
 
@@ -170,6 +174,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+	}else if function == "Getjournal" {
+		return t.Getjournal(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -199,6 +205,11 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 	return []byte(state) , err
 }
 
+func (t *SimpleChaincode) Getjournal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	valAsbytes, err := stub.GetState(args[0])
+	
+	return  valAsbytes, err 
+}
 
 
 
