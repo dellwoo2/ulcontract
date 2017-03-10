@@ -148,7 +148,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 //***********************************************
 //* Create a newpolicy
-func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []string) ([]byte, error) {
 	if len(args) != 12 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 12")
 	}
@@ -204,7 +204,6 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface, function s
 	policies[policy.Cont.ContID]=policy.Cont.Status
         b, err := json.Marshal(policy)
 	err = 	stub.PutState(policy.Cont.ContID, b)
-
 	//*****************************************
 	//* Save the stateof  the policies map
         b, err = json.Marshal(policies)
@@ -214,7 +213,7 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface, function s
 		return nil, err
 	}
 	t.welcome(stub, policy)
-	return nil, err
+	return []byte("Policy Added"), err
 }
 
 // Invoke isur entry point to invoke a chaincode function
@@ -258,6 +257,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		_ ,err = t.deactivate(stub, args )
 	} else if function == " setJournalDone" {
 		return t. setJournalDone(stub, args)
+	} else if function == " NewPolicy" {
+		return t. NewPolicy(stub, args)
 	}else{ 
 		fmt.Println("invoke did not find func: " + function)
 		err=errors.New("Received unknown function invocation: " + function)
