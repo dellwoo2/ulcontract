@@ -28,7 +28,7 @@ import (
 	"log"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/dellwoo2/ulcontract/ulcnew/shared"
+	"github.com/dellwoo2/ulcontract/newulc/shared"
 	"net/http" 
  //   	"encoding/binary"
   	"bytes"
@@ -472,7 +472,7 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 	}
 	contract.Status="IF"
 	policy.Cont=contract
- 	activate(stub, args )
+ 	t.activate(stub, args )
 	return  policy, err
 }
 
