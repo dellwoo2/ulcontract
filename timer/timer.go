@@ -87,6 +87,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	return nil, errors.New("Received unknown function invocation: " + function)
 }
 func (t *SimpleChaincode) activate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	ccmap=make(map[string]string)
 	valAsbytes, err := stub.GetState("ccmap")
     	json.Unmarshal(valAsbytes , &ccmap)
 
@@ -134,6 +135,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	//var key, value string
 	var tx int64
+	ccmap=make(map[string]string)
 	fmt.Println("running set scheduler")
 	if len(args) < 1 {
 		tx=300
