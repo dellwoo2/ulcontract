@@ -91,8 +91,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.updateJ(stub, args)
 	}else if function == "updateT" {
 		return t.updateT(stub, args)
-	}else if function == "journal" {
-		return t.journal(stub, args)
+	}else if function == "Crtjournal" {
+		return t.Crtjournal(stub, args)
 	}
 	fmt.Println("invoke did not find func: " + function)
 	locked=false
@@ -137,7 +137,7 @@ func (t *SimpleChaincode) updateJ(stub shim.ChaincodeStubInterface, args []strin
 	return []byte("Updated"), err
 }
 
-func (t *SimpleChaincode) journal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) Crtjournal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	locked=true
 	valAsbytes, err := stub.GetState("gltran")
   	gltran=make(map[string]GLtran)
@@ -155,6 +155,8 @@ func (t *SimpleChaincode) journal(stub shim.ChaincodeStubInterface, args []strin
  	byt, _ := json.Marshal(gltran)
 	err = stub.PutState("gltran", byt)
  	jb, _ := json.Marshal(journal)
+	invokeTran:=stub.GetTxID()
+	err = stub.PutState(invokeTran, jb)
 	locked=false
 	return jb , err
 }
@@ -167,6 +169,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+	}else if function == "Getjournal" {
+		return t.Getjournal(stub, args)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -196,7 +200,11 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 	return []byte(state) , err
 }
 
-
+func (t *SimpleChaincode) Getjournal(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	valAsbytes, err := stub.GetState(args[0])
+	
+	return  valAsbytes, err 
+}
 
 
 // read - query function to read key/value pair
