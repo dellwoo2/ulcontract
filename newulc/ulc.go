@@ -242,7 +242,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
         //xx = shared.Args{1, 2} 
 	// Handle different functions
 	if function == "init" {
-		_,err = t.Init(stub, "init", args)
+		return  t.Init(stub, "init", args)
 	} else if function == "fundAllocation" {
 		policy , err = t.fundAllocation(stub, args, policy)
 	} else if function == "applyPremium" {
@@ -262,6 +262,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	}else{ 
 		fmt.Println("invoke did not find func: " + function)
 		err=errors.New("Received unknown function invocation: " + function)
+        }
+	if  policy.Cont.ContID=="" {
+		return nil,nil
         }
 	//*************************
 	//* if we are here then we need to update the ODS
