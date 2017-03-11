@@ -219,8 +219,8 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	invokeTran=stub.GetTxID()
-	l.Println("DE************* Invoke Function "+ function )
-	policy.Hist=make(map[string]History)
+	fmt.Println("DE************* Invoke Function "+ function )
+
 	//***********************************************
 	// process contract independant functions 
 	if function == "init" {
@@ -228,9 +228,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	} else if function == "schedule" {
 		return t.monthlyProcessing(stub, args )
 	} else if function == "activate" {
-		return = t.activate(stub, args  )
+		return t.activate(stub, args  )
 	} else if function == "deactivate" {
-		return = t.deactivate(stub, args )
+		return t.deactivate(stub, args )
 	} else if function == " setJournalDone" {
 		return t. setJournalDone(stub, args)
 	} else if function == " NewPolicy" {
@@ -238,10 +238,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	}
 	//**************************************
 	// all remaining functions require a contract number in args[0]
-	l := log.New(os.Stderr, "", 0)
 	fmt.Println("invoke for policy " + args[0])
 	var policy Policy
-
+	policy.Hist=make(map[string]History)
 	//*****************************************
 	// get Contract state 
 	valAsbytes, _ := stub.GetState(args[0])
@@ -437,7 +436,7 @@ func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args 
 
         policy.Cont.Acct.Fnds=fnd
 	policy.Cont=contract
-	return  policy, err
+	return  policy, nil
 }
 
 
