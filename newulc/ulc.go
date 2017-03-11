@@ -596,6 +596,12 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
 }
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	var err error
+	  policies=make(map[string]string)
+	  //*****************************************
+	  // get the mal listing all policies  
+	  vb, _ := stub.GetState("policies")
+    	  json.Unmarshal(vb , &policies)
+
    //Iterate over the contracts & process all that are in force
         for key , value := range policies {
 		if value == "IF" {
