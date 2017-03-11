@@ -219,11 +219,29 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	invokeTran=stub.GetTxID()
-	fmt.Println("invoke is running " + function)
+	l.Println("DE************* Invoke Function "+ function )
+	policy.Hist=make(map[string]History)
+	//***********************************************
+	// process contract independant functions 
+	if function == "init" {
+		return  t.Init(stub, "init", args)
+	} else if function == "schedule" {
+		return t.monthlyProcessing(stub, args )
+	} else if function == "activate" {
+		return = t.activate(stub, args  )
+	} else if function == "deactivate" {
+		return = t.deactivate(stub, args )
+	} else if function == " setJournalDone" {
+		return t. setJournalDone(stub, args)
+	} else if function == " NewPolicy" {
+		return t. NewPolicy(stub, args)
+	}
+	//**************************************
+	// all remaining functions require a contract number in args[0]
 	l := log.New(os.Stderr, "", 0)
 	fmt.Println("invoke for policy " + args[0])
 	var policy Policy
-	policy.Hist=make(map[string]History)
+
 	//*****************************************
 	// get Contract state 
 	valAsbytes, _ := stub.GetState(args[0])
@@ -238,27 +256,16 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	policy.Hist[h.Tranid]=h
 
         var err error
-	l.Println("DE************* Invoke Function "+ function )
+
         //xx = shared.Args{1, 2} 
 	// Handle different functions
-	if function == "init" {
-		return  t.Init(stub, "init", args)
-	} else if function == "fundAllocation" {
+
+	 if function == "fundAllocation" {
 		policy , err = t.fundAllocation(stub, args, policy)
 	} else if function == "applyPremium" {
 		policy,err = t.applyPremium(stub, args, policy)
-	} else if function == "schedule" {
-		_ ,err = t.monthlyProcessing(stub, args )
 	} else if function == "surrender" {
 		policy,err = t.surrender(stub, args , policy )
-	} else if function == "activate" {
-		_ ,err = t.activate(stub, args  )
-	} else if function == "deactivate" {
-		_ ,err = t.deactivate(stub, args )
-	} else if function == " setJournalDone" {
-		return t. setJournalDone(stub, args)
-	} else if function == " NewPolicy" {
-		return t. NewPolicy(stub, args)
 	}else{ 
 		fmt.Println("invoke did not find func: " + function)
 		err=errors.New("Received unknown function invocation: " + function)
@@ -380,7 +387,8 @@ func (t *SimpleChaincode) deactivate(stub shim.ChaincodeStubInterface, args []st
 
 func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []string , policy Policy ) ( Policy, error) {
 	var contract Contract=policy.Cont
-	surr, _ := strconv.ParseFloat( args[0] , 10);
+	// surrender amount is args[1]
+	surr, _ := strconv.ParseFloat( args[1] , 10);
 	surrchg:=20
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
@@ -423,10 +431,11 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
 func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args []string , policy Policy) ( Policy, error ) {
 	var contract Contract=policy.Cont
     	var fnd[20]Fund
-        json.Unmarshal([]byte(args[0]), &fnd)
-	valAsbytes, err := stub.GetState("Contract")
-    	json.Unmarshal(valAsbytes , &contract)
-        contract.Acct.Fnds=fnd
+        //******************************
+	// arg[1] is the funds array
+        json.Unmarshal([]byte(args[1]), &fnd)
+
+        policy.Cont.Acct.Fnds=fnd
 	policy.Cont=contract
 	return  policy, err
 }
@@ -434,7 +443,8 @@ func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args 
 
 func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 	var contract Contract=policy.Cont
-	premium, _ := strconv.ParseFloat( args[0] , 10);
+	// payment is arg[1]
+	premium, _ := strconv.ParseFloat( args[1] , 10);
 
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
 	valAsbytes, err := stub.GetState("Contract")

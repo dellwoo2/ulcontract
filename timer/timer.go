@@ -178,6 +178,7 @@ func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , ccid string)
          "ctorMsg": {
              "function": "schedule",
              "args": [
+		"xxxx"
              ]
          },
          "secureContext": "admin"
