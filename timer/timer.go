@@ -120,6 +120,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+	} else if function == "ping" {
+		return t.ping(stub, args)
 	} else if function == "schedule" {
 		t.schedule(stub, args)
 		return nil, nil 
@@ -130,6 +132,9 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	return nil, errors.New("Received unknown function query: " + function)
 }
 
+func (t *SimpleChaincode) ping(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+  return []byte("Scheduler is Deployed"), nil
+}
 // Schedule - query function to call invoke methods on contract
 func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	//var key, value string
