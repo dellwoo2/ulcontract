@@ -117,7 +117,6 @@ func (t *SimpleChaincode) kill(stub shim.ChaincodeStubInterface, args []string) 
 // Query is our entry point for queries
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
-
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
@@ -140,7 +139,7 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 	if len(args) < 1 {
 		tx=300
 	}else{
-		tx, _ = strconv.ParseInt( args[2] , 10 , 64);
+		tx, _ = strconv.ParseInt( args[0] , 10 , 64);
         }
 	sbytes, err := stub.GetState("state")
 	state= string(sbytes[:]) 
