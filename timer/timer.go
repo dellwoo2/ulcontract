@@ -123,7 +123,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	} else if function == "ping" {
 		return t.ping(stub, args)
 	} else if function == "schedule" {
-		t.schedule(stub, args)
+		go t.schedule(stub, args)
 		return nil, nil 
 
 	} 
@@ -137,6 +137,7 @@ func (t *SimpleChaincode) ping(stub shim.ChaincodeStubInterface, args []string) 
 }
 // Schedule - query function to call invoke methods on contract
 func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("running scheduler")
 	//var key, value string
 	var tx int64
 	ccmap=make(map[string]string)
