@@ -123,7 +123,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	} else if function == "ping" {
 		return t.ping(stub, args)
 	} else if function == "schedule" {
-		go t.schedule(stub, args)
+		return t.schedule(stub, args)
 		return nil, nil 
 
 	} 
