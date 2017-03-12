@@ -138,7 +138,6 @@ func (t *SimpleChaincode) ping(stub shim.ChaincodeStubInterface, args []string) 
 func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	fmt.Println("running scheduler")
 	//var key, value string
-	var ccid string
 	var tx int64
 	ccmap=make(map[string]string)
 	fmt.Println("running set scheduler")
@@ -153,18 +152,8 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 		time.Sleep(time.Duration( tx ) * time.Second  )
     		fmt.Print("Timer Iteration=")
     		fmt.Println(i)
-		fmt.Println("Processing Schedule before getstate")
-		valAsbytes, err := stub.GetState("ccid")
-		fmt.Println(err)
-		ccid=string(valAsbytes)
-    		//json.Unmarshal(valAsbytes , &ccid)		
-//		for key, value := range ccmap {
-		     fmt.Println("Processing Schedule for CCID=" + ccid)
-// 		     if value=="Y" { 
-			t.callCC(stub , ccid)
-			t.callDD(stub , ccid )
-//		     }
-//		}
+			t.callCC(stub , args[1])
+//			t.callDD(stub , qrgs[1] )
 	}
 	return []byte(state) , err
 }
