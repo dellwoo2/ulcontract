@@ -136,10 +136,10 @@ func (t *SimpleChaincode) get(stub shim.ChaincodeStubInterface, args []string) (
 	w1.Policies=make(map[string]string)
 	var byt []byte
 	if w, ok :=register[args[0]] ; ok {
-	    	byt, err := json.Marshal( w )
+	    	byt, err = json.Marshal( w )
 
         } else{
-		byt, err := json.Marshal( w1 )
+		byt, err = json.Marshal( w1 )
 	}
 
 	fmt.Println("Policy List for user "+args[0]+"="+string(byt))
