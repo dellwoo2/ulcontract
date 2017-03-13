@@ -627,9 +627,10 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 	return nil , err
 }
 func (t *SimpleChaincode) ProcessPolicy(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
+		  var err error
 		  policy , err = t.ProcessCharges(stub, args , policy)
-		  policy=statement(stub , args , policy ) 
-
+		  t.statement(stub , args , policy ) 
+	return policy, err	
 }
 func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 	var contract Contract=policy.Cont
@@ -689,7 +690,7 @@ func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []str
 func(t *SimpleChaincode) welcome(stub shim.ChaincodeStubInterface , policy Policy) ([]byte, error) {
 	var contract Contract=policy.Cont
 	subject:="Thank you for your application"
-	body:=`Dear Mr `+ contract.Lf.Name + `#N Thank you for your application, which has now been accepted #N We will activate your new Policy as soon as payment is received `
+	body:=`Dear Mr `+ contract.Lf.Name + `#N Policy Number=`+policy.Cont.ContID+`#N Thank you for your application, which has now been accepted #N We will activate your new Policy as soon as payment is received`
 
  t.mailto(stub, subject , body, policy )
  return nil,nil
