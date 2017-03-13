@@ -607,6 +607,7 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 
    //Iterate over the contracts & process all that are in force
         for key , value := range policies {
+        fmt.Println("Sheduler Looking at Policy" + key +" Status="+value)
 		if value == "IF" {
 		  var policy Policy
 		  policy.Hist=make(map[string]History)
@@ -625,8 +626,12 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
         fmt.Println("completed Scheduled Processing")
 	return nil , err
 }
-
 func (t *SimpleChaincode) ProcessPolicy(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
+		  policy , err = t.ProcessCharges(stub, args , policy)
+		  policy=statement(stub , args , policy ) 
+
+}
+func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 	var contract Contract=policy.Cont
         fmt.Println("Scheduled Processing for contract" + policy.Cont.ContID)
 	coi:=33
