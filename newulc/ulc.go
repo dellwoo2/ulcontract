@@ -184,7 +184,7 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 
 	// set to ready for now till UW contract is implemented
   	policy.Cont.UWstatus="Ready"
-
+	fmt.Println("Creating New Policy for :"+ policy.Cont.ContID )
 	if _ ,ok:=policies[policy.Cont.ContID] ; ok {
 		fmt.Println("Contract Already Exist ")
 		return nil, errors.New("Contract exists already")
@@ -233,7 +233,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.deactivate(stub, args )
 	} else if function == " setJournalDone" {
 		return t. setJournalDone(stub, args)
-	} else if function == " NewPolicy" {
+	} else if function == "NewPolicy" {
 		return t. NewPolicy(stub, args)
 	}
 	//**************************************
@@ -595,6 +595,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
     return err
 }
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+        fmt.Println("Starting Scheduled Processing")
 	var err error
 	  policies=make(map[string]string)
 	  //*****************************************
@@ -619,11 +620,13 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 		  err =	stub.PutState(key , b)
 	        }
 	}
+        fmt.Println("completed Scheduled Processing")
 	return nil , err
 }
 
 func (t *SimpleChaincode) ProcessPolicy(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 	var contract Contract=policy.Cont
+        fmt.Println("Scheduled Processing for contract" + policy.Cont.ContID)
 	coi:=33
         fmc:=10
 	adc:=12
