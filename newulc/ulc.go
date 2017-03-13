@@ -149,8 +149,8 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 //***********************************************
 //* Create a newpolicy
 func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []string) ([]byte, error) {
-	if len(args) != 12 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 12")
+	if len(args) != 11 {
+		return nil, errors.New("Incorrect number of arguments. Expecting 11")
 	}
         count=0;
 	l := log.New(os.Stderr, "", 0)
