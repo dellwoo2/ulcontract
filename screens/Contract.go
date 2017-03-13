@@ -9,7 +9,7 @@ import (
  "bytes"
 "time"
 "strings"
-"strconv"
+//"strconv"
 )
 
 //*****************************************
@@ -58,7 +58,8 @@ var startInit string
 var odsmanager string
 var glmanager string
 var commsmanager string
-
+var polid string
+var cont Contract
 type Page struct {
     Title string
     Body  []byte
@@ -101,7 +102,7 @@ func loadPage(title string) (*Page ,error){
 }
  
 func process(w http.ResponseWriter, r *http.Request) {
-var cont Contract
+
 r.ParseForm()
 //fmt.Fprintln(w, r.Form)
 //fmt.Print(r.Form)
@@ -132,8 +133,8 @@ fmt.Print("calling process\n")
 		 cont.Email=r.FormValue("email")
 		 cont.ContID=createContract(cont)
 	 	 //var cm map[string]string
-		 x:=int64(count)
-		 cm["000" + strconv.FormatInt( x ,10)]=ccid
+		  //x:=int64(count)
+		 //cm["000" + strconv.FormatInt( x ,10)]=ccid
 		 count++
 		 fmt.Println(ccid)
         	title="EnterContract.html"
@@ -143,7 +144,7 @@ fmt.Print("calling process\n")
         }
 	if title=="pay" {
 		fmt.Print("Process Pay")
-		payment( r.FormValue("pay") )
+		payment( r.FormValue("pay"), cont )
         	title="Payment.html"
  	}
 
@@ -195,10 +196,29 @@ func createContract( cont Contract)(string){
 	"\""+ cont.Lf.Name +"\","+
 	"\""+ cont.Email +"\"," +
 	"\""+ cont.SumAssured +"\"" 
-  var jsonStr = []byte( `{"jsonrpc":"2.0","method":"invoke","params":
-				{"type":1,"chaincodeID":{
-				"path": "https://github.com/dellwoo2/ulcontract/ulc"},"ctorMsg":{"function":"NewPolicy","args":[`+args +`]},"secureContext":"admin"},"id":1}` ) 
-  fmt.Println(string(jsonStr))
+  
+
+var jsonStr = []byte( `
+{
+     "jsonrpc": "2.0",
+     "method": "invoke",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "name":"`+ccid+`"
+         },
+         "ctorMsg": {
+             "function": "NewPolicy",
+             "args": [`+ args +` 
+        ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 3
+ }`)
+
+
+   fmt.Println(string(jsonStr))
 
    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
     req.Header.Set("X-Custom-Header", "myvalue")
@@ -229,10 +249,10 @@ func createContract( cont Contract)(string){
 *********************/
 i:= strings.LastIndex( string(body) , "message\":\"" )
 fmt.Println("CONTRACT ID="+ string(body)[i+10:i+36])
- contractId:=string(body)[i+10:i+36]
+ contractId:=string(body)[i+10:i+46]
  return contractId
 }
-
+/**********************************
 func activate(   )(string){
   var jsonStr = []byte( `{
      "jsonrpc": "2.0",
@@ -274,7 +294,10 @@ func activate(   )(string){
 
 
 }
-func payment(  payment string  )(string){
+***************************************/
+
+
+func payment(  payment string , cont Contract )(string){
   var jsonStr = []byte( `{
      "jsonrpc": "2.0",
      "method": "invoke",
@@ -286,6 +309,7 @@ func payment(  payment string  )(string){
          "ctorMsg": {
              "function": "applyPremium",
              "args": [
+                 "`+cont.ContID+`",
                  "`+payment+`"
              ]
          },
@@ -336,7 +360,7 @@ ccid= cfg.Section("").Key("CCID").String()
 fmt.Print(err)
 fmt.Print(url)
 fmt.Print(user)
-fmt.Print(secret)
+fmt.Print(ccid)
 signIn()
 t:=time.Now()
 fmt.Println(t.String())

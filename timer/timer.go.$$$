@@ -87,13 +87,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	return nil, errors.New("Received unknown function invocation: " + function)
 }
 func (t *SimpleChaincode) activate(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
-	valAsbytes, err := stub.GetState("ccmap")
-    	json.Unmarshal(valAsbytes , &ccmap)
-
-	ccmap[args[0]]="Y"
+//	ccmap=make(map[string]string)
+//	valAsbytes, err := stub.GetState("ccmap")
+//    	json.Unmarshal(valAsbytes , &ccmap)
+//	ccmap[args[0]]="Y"
         
-        valAsbytes, err= json.Marshal(ccmap)
-	err = stub.PutState("ccmap", valAsbytes)
+//        valAsbytes, err= json.Marshal(ccmap)
+	err := stub.PutState("ccid", []byte(args[0]))
 	return []byte("Activated"), err
 }
 
@@ -116,12 +116,13 @@ func (t *SimpleChaincode) kill(stub shim.ChaincodeStubInterface, args []string) 
 // Query is our entry point for queries
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
-
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
+	} else if function == "ping" {
+		return t.ping(stub, args)
 	} else if function == "schedule" {
-		go t.schedule(stub, args)
+		return t.schedule(stub, args)
 		return nil, nil 
 
 	} 
@@ -130,15 +131,21 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	return nil, errors.New("Received unknown function query: " + function)
 }
 
+func (t *SimpleChaincode) ping(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+  return []byte("Scheduler is Deployed"), nil
+}
 // Schedule - query function to call invoke methods on contract
 func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	fmt.Println("running scheduler")
 	//var key, value string
+	var ccid string
 	var tx int64
+	ccmap=make(map[string]string)
 	fmt.Println("running set scheduler")
 	if len(args) < 1 {
 		tx=300
 	}else{
-		tx, _ = strconv.ParseInt( args[2] , 10 , 64);
+		tx, _ = strconv.ParseInt( args[0] , 10 , 64);
         }
 	sbytes, err := stub.GetState("state")
 	state= string(sbytes[:]) 
@@ -146,15 +153,8 @@ func (t *SimpleChaincode) schedule(stub shim.ChaincodeStubInterface, args []stri
 		time.Sleep(time.Duration( tx ) * time.Second  )
     		fmt.Print("Timer Iteration=")
     		fmt.Println(i)
-		valAsbytes, err := stub.GetState("ccmap")
-    		json.Unmarshal(valAsbytes , &ccmap)		
-		for key, value := range ccmap {
-		     fmt.Println("Processing Schedul for CCID=" + key+" Active=", value)
- 		     if value=="Y" { 
-			t.callCC(stub , key)
-			t.callDD(stub , key )
-		     }
-		}
+			t.callCC(stub , args[1])
+//			t.callDD(stub , qrgs[1] )
 	}
 	return []byte(state) , err
 }
@@ -172,6 +172,7 @@ func (t *SimpleChaincode) callCC(stub shim.ChaincodeStubInterface , ccid string)
          "ctorMsg": {
              "function": "schedule",
              "args": [
+		"xxxx"
              ]
          },
          "secureContext": "admin"

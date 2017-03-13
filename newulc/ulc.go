@@ -796,7 +796,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 
 func (t *SimpleChaincode) transactions(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
 	var valAsbytes []byte
-	err:=json.Unmarshal(valAsbytes , &policy.Hist)
+	err:=json.Unmarshal(valAsbytes , &policy)
 	fmt.Println(err)
   return valAsbytes, err
 }

@@ -30,13 +30,35 @@ import (
 // SimpleChaincode example simple Chaincode implementation
 type SimpleChaincode struct {
 }
-type Fnd struct{
-  FundID string
-  Unitvalue float64
+
+
+type Fund struct{
+ FundId string
+ Units  string
 }
 
-var fundarray [100]Fnd
-var fundmap map[string]float64
+type ContractFunds struct
+ Fmap  map[string]Funds
+ ContID string
+ Dte string
+}
+type Prices struct{
+  FundID string
+  UnitPrice string
+  PriceDate string
+}
+
+//***********************************
+//* total is the list of new funds for contracts
+var totalmap map[string]ContractFunds
+var newmap map[string]ContractFunds
+var movementhistory  map[string]ContractFunds
+//***********************************
+//* Portfolio holds the existing position
+var portfoliomap map[string]ContractFunds
+//*************************************
+//* Holds the latest prices for the funds 
+var pricemap map[string]Prices
 
 var lastupdated string
 
@@ -57,6 +79,10 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	newmap=make(map[string]ContractFunds)
+	valAsbytes, _ := stub.GetState("Newmap")
+    	json.Unmarshal(valAsbytes , &newmap)
+
 	fmt.Println("invoke is running " + function)
 	// Handle different functions
 	if function == "init" {
@@ -65,49 +91,95 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return t.update(stub, "init", args)
 	}
 	fmt.Println("invoke did not find func: " + function)
+        b, err := json.Marshal(newmap)
+	err = 	stub.PutState("Newmap", b)
 
 	return nil, errors.New("Received unknown function invocation: " + function)
 }
 
 
 func (t *SimpleChaincode) update(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	var cf ContractFund
+	cf.Fmap=make(map[string]Funds)
+
 	if len(args) != 2 {
 		return nil, errors.New("Incorrect number of arguments. Expecting name of the key to Update")
 	}
-        err:=json.Unmarshal([]byte(args[0]), &fundarray)
-        lastupdated =args[1]
-	err = stub.PutState("lastupdated" , []byte(lastupdated ))
-	err = stub.PutState("fundarray" , []byte(args[0]) )
-        for i:=0 ; i < 100 ; i++{
-           fundmap[fundarray[i].FundID]=fundarray[i].Unitvalue
-	} 
+    	json.Unmarshal(args[1] , &cf.Fmap)
+	cf.ContID=args[0]
+	newmap[args[0]]=cf
+
 	return nil, err
 }
 // Query is our entry point for queries
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
-	fbyt, err := stub.GetState("fundarray" )
-        json.Unmarshal(fbyt, &fundarray)
 	// Handle different functions
 	if function == "read" { //read a variable
 		return t.read(stub, args)
-	} else if function == "fund" { //read a variable
+	} else if function == "fundprice" { //read a variable
 		return t.fund(stub, args)
+	} else if function == "movements" { //read a variable
+		return t.fund(stub, args)
+	} else if function == "portfolio" { //read a variable
+		return t.fund(stub, args)
+
 	} 
 	fmt.Println("query did not find func: " + function)
 
 	return nil, errors.New("Received unknown function query: " + function)
 }
 
-func (t *SimpleChaincode) fund(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+func (t *SimpleChaincode) fundprice(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
 	//var key, jsonResp string
 	//var err error
 	if len(args) != 0 {
 		return nil, errors.New("Incorrect number of arguments. Expecting name of the key to query")
 	}
-	val:=strconv.FormatFloat(fundmap[args[0]], 'F', -1, 64)
+	pm:= pricemap[args[0]]
 
-	return []byte(val) , nil
+	return []byte( pm.UnitPrice ) , nil
+}
+
+func (t *SimpleChaincode) movements(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+   //var totalmap map[string]ContractFunds
+   //***********************************
+   //* Portfolio holds the existing position
+   //var portfoliomap map[string]ContractFunds
+
+	valAsbytes, _ := stub.GetState("Totalmap")
+    	json.Unmarshal(valAsbytes , &totalmap)
+	valAsbytes, _ := stub.GetState("Newmap")
+    	json.Unmarshal(valAsbytes , &newmap)
+	//loop round total map getting movements
+	var mv Fund 
+	var mvmap map[string]Fund
+	mvmap=make(map[string]Fund)
+          for key, newvalue := range newmap{
+            fmt.Println("Key:", key, "Value:", fvalue)
+	    if existingval,ok "=totalmap[key] ; ok }
+                 mv.FundId=key
+		 a , err :=strconv.ParseFloat(newvalue.Units , 10)
+		 b , err :=strconv.ParseFloat(existingval.Units , 10)
+		 mv.Units=strconv.FormatFloat(float64( a - b ),  'f' , 2,  64)
+		 mv.FundId=key
+		 mvmap[mv.FundId]=mv
+            }else{
+		 mv.Units=newvalue.Units
+		 mv.FundId=key
+		 mvmap[mv.FundId]=mv
+	    }
+	  }
+        byt, err := json.Marshal(mvmap)
+	err = 	stub.PutState("policies", b)
+	return byt , nil
+}
+
+func (t *SimpleChaincode) portfolio(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+	valAsbytes, _ := stub.GetState("Portfoliomap")
+    	json.Unmarshal(valAsbytes , &portfoliomap)
+
+	return valAsbytes , nil
 }
 
 // read - query function to read key/value pair

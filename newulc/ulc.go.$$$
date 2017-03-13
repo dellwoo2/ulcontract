@@ -28,7 +28,7 @@ import (
 	"log"
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/dellwoo2/ulcontract/ulc/shared"
+	"github.com/dellwoo2/ulcontract/newulc/shared"
 	"net/http" 
  //   	"encoding/binary"
   	"bytes"
@@ -123,7 +123,7 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if len(args) != 4 {
+	if len(args) != 5 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 5 " )
 	}
         count=0;
@@ -149,13 +149,15 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 //***********************************************
 //* Create a newpolicy
 func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []string) ([]byte, error) {
-	if len(args) != 12 {
-		return nil, errors.New("Incorrect number of arguments. Expecting 12")
+	fmt.Println("************* Unit Linked  New Policy****************")
+	if len(args) != 11 {
+	 	fmt.Println("Incorrect number of arguments. Expecting 11")
+		return nil, errors.New("Incorrect number of arguments. Expecting 11")
 	}
         count=0;
-	l := log.New(os.Stderr, "", 0)
-	l.Println("************* Unit Linked  New Policy****************")
-	l.Println("Policy ID="+stub.GetTxID())
+
+
+	fmt.Println("Policy ID="+stub.GetTxID())
   	var policy Policy 
 	if policies == nil {
 	  policies=make(map[string]string)
@@ -184,7 +186,7 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 
 	// set to ready for now till UW contract is implemented
   	policy.Cont.UWstatus="Ready"
-
+	fmt.Println("Creating New Policy for :"+ policy.Cont.ContID )
 	if _ ,ok:=policies[policy.Cont.ContID] ; ok {
 		fmt.Println("Contract Already Exist ")
 		return nil, errors.New("Contract exists already")
@@ -219,8 +221,25 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 // Invoke isur entry point to invoke a chaincode function
 func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	invokeTran=stub.GetTxID()
-	fmt.Println("invoke is running " + function)
-	l := log.New(os.Stderr, "", 0)
+	fmt.Println("DE************* Invoke Function "+ function )
+
+	//***********************************************
+	// process contract independant functions 
+	if function == "init" {
+		return  t.Init(stub, "init", args)
+	} else if function == "schedule" {
+		return t.monthlyProcessing(stub, args )
+	} else if function == "activate" {
+		return t.activate(stub, args  )
+	} else if function == "deactivate" {
+		return t.deactivate(stub, args )
+	} else if function == " setJournalDone" {
+		return t. setJournalDone(stub, args)
+	} else if function == "NewPolicy" {
+		return t. NewPolicy(stub, args)
+	}
+	//**************************************
+	// all remaining functions require a contract number in args[0]
 	fmt.Println("invoke for policy " + args[0])
 	var policy Policy
 	policy.Hist=make(map[string]History)
@@ -238,30 +257,22 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	policy.Hist[h.Tranid]=h
 
         var err error
-	l.Println("DE************* Invoke Function "+ function )
+
         //xx = shared.Args{1, 2} 
 	// Handle different functions
-	if function == "init" {
-		_,err = t.Init(stub, "init", args)
-	} else if function == "fundAllocation" {
+
+	 if function == "fundAllocation" {
 		policy , err = t.fundAllocation(stub, args, policy)
 	} else if function == "applyPremium" {
 		policy,err = t.applyPremium(stub, args, policy)
-	} else if function == "schedule" {
-		_ ,err = t.monthlyProcessing(stub, args )
 	} else if function == "surrender" {
 		policy,err = t.surrender(stub, args , policy )
-	} else if function == "activate" {
-		_ ,err = t.activate(stub, args  )
-	} else if function == "deactivate" {
-		_ ,err = t.deactivate(stub, args )
-	} else if function == " setJournalDone" {
-		return t. setJournalDone(stub, args)
-	} else if function == " NewPolicy" {
-		return t. NewPolicy(stub, args)
 	}else{ 
 		fmt.Println("invoke did not find func: " + function)
 		err=errors.New("Received unknown function invocation: " + function)
+        }
+	if  policy.Cont.ContID=="" {
+		return nil,nil
         }
 	//*************************
 	//* if we are here then we need to update the ODS
@@ -377,7 +388,8 @@ func (t *SimpleChaincode) deactivate(stub shim.ChaincodeStubInterface, args []st
 
 func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []string , policy Policy ) ( Policy, error) {
 	var contract Contract=policy.Cont
-	surr, _ := strconv.ParseFloat( args[0] , 10);
+	// surrender amount is args[1]
+	surr, _ := strconv.ParseFloat( args[1] , 10);
 	surrchg:=20
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
@@ -420,18 +432,20 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
 func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args []string , policy Policy) ( Policy, error ) {
 	var contract Contract=policy.Cont
     	var fnd[20]Fund
-        json.Unmarshal([]byte(args[0]), &fnd)
-	valAsbytes, err := stub.GetState("Contract")
-    	json.Unmarshal(valAsbytes , &contract)
-        contract.Acct.Fnds=fnd
+        //******************************
+	// arg[1] is the funds array
+        json.Unmarshal([]byte(args[1]), &fnd)
+
+        policy.Cont.Acct.Fnds=fnd
 	policy.Cont=contract
-	return  policy, err
+	return  policy, nil
 }
 
 
 func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 	var contract Contract=policy.Cont
-	premium, _ := strconv.ParseFloat( args[0] , 10);
+	// payment is arg[1]
+	premium, _ := strconv.ParseFloat( args[1] , 10);
 
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
 	valAsbytes, err := stub.GetState("Contract")
@@ -472,7 +486,7 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 	}
 	contract.Status="IF"
 	policy.Cont=contract
-
+ 	t.activate(stub, args )
 	return  policy, err
 }
 
@@ -583,9 +597,17 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
     return err
 }
 func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, args []string) ([]byte, error) {
+        fmt.Println("Starting Scheduled Processing")
 	var err error
+	  policies=make(map[string]string)
+	  //*****************************************
+	  // get the mal listing all policies  
+	  vb, _ := stub.GetState("policies")
+    	  json.Unmarshal(vb , &policies)
+
    //Iterate over the contracts & process all that are in force
         for key , value := range policies {
+        fmt.Println("Sheduler Looking at Policy" + key +" Status="+value)
 		if value == "IF" {
 		  var policy Policy
 		  policy.Hist=make(map[string]History)
@@ -601,11 +623,18 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 		  err =	stub.PutState(key , b)
 	        }
 	}
+        fmt.Println("completed Scheduled Processing")
 	return nil , err
 }
-
 func (t *SimpleChaincode) ProcessPolicy(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
+		  var err error
+		  policy , err = t.ProcessCharges(stub, args , policy)
+		  t.statement(stub , args , policy ) 
+	return policy, err	
+}
+func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 	var contract Contract=policy.Cont
+        fmt.Println("Scheduled Processing for contract" + policy.Cont.ContID)
 	coi:=33
         fmc:=10
 	adc:=12
@@ -661,7 +690,7 @@ func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []str
 func(t *SimpleChaincode) welcome(stub shim.ChaincodeStubInterface , policy Policy) ([]byte, error) {
 	var contract Contract=policy.Cont
 	subject:="Thank you for your application"
-	body:=`Dear Mr `+ contract.Lf.Name + `#N Thank you for your application, which has now been accepted #N We will activate your new Policy as soon as payment is received `
+	body:=`Dear Mr `+ contract.Lf.Name + `#N Policy Number=`+policy.Cont.ContID+`#N Thank you for your application, which has now been accepted #N We will activate your new Policy as soon as payment is received`
 
  t.mailto(stub, subject , body, policy )
  return nil,nil
@@ -737,27 +766,27 @@ func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []str
 // Query is our entry point for queries
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
+	// first those that dont take policy number
+	if function == "journal" {
+		return t.journal(stub, args )
+	}
+
+	//**************************************
+	// Now the functions that require a policy number
 	fmt.Println("invoke for policy " + args[0])
 	var policy Policy
+	policy.Hist=make(map[string]History)
 	//*****************************************
 	// get Contract state 
 	valAsbytes, _ := stub.GetState(args[0])
     	json.Unmarshal(valAsbytes , &policy)
 	// Handle different functions
-	if function == "read" { //read a variable
-		return t.read(stub, args, policy )
-	}else if function == "statement" {
+	if function == "statement" {
 		return t.statement(stub, args, policy)
 	} else if function == "valuation" {
 		return t.valuation(stub, args, policy)
-	} else if function == "activate" {
-		return t.activate(stub, args)
-	} else if function == "deactivate" {
-		return t.deactivate(stub, args)
 	} else if function == "transactions" {
 		return t.transactions(stub, args, policy)
-	} else if function == "journal" {
-		return t.journal(stub, args )
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -768,6 +797,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 func (t *SimpleChaincode) transactions(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
 	var valAsbytes []byte
 	err:=json.Unmarshal(valAsbytes , &policy.Hist)
+	fmt.Println(err)
   return valAsbytes, err
 }
 
