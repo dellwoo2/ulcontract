@@ -766,27 +766,27 @@ func (t *SimpleChaincode) valuation(stub shim.ChaincodeStubInterface, args []str
 // Query is our entry point for queries
 func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
 	fmt.Println("query is running " + function)
+	// first those that dont take policy number
+	if function == "journal" {
+		return t.journal(stub, args )
+	}
+
+	//**************************************
+	// Now the functions that require a policy number
 	fmt.Println("invoke for policy " + args[0])
 	var policy Policy
+	policy.Hist=make(map[string]History)
 	//*****************************************
 	// get Contract state 
 	valAsbytes, _ := stub.GetState(args[0])
     	json.Unmarshal(valAsbytes , &policy)
 	// Handle different functions
-	if function == "read" { //read a variable
-		return t.read(stub, args, policy )
-	}else if function == "statement" {
+	if function == "statement" {
 		return t.statement(stub, args, policy)
 	} else if function == "valuation" {
 		return t.valuation(stub, args, policy)
-	} else if function == "activate" {
-		return t.activate(stub, args)
-	} else if function == "deactivate" {
-		return t.deactivate(stub, args)
 	} else if function == "transactions" {
 		return t.transactions(stub, args, policy)
-	} else if function == "journal" {
-		return t.journal(stub, args )
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -797,6 +797,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 func (t *SimpleChaincode) transactions(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
 	var valAsbytes []byte
 	err:=json.Unmarshal(valAsbytes , &policy.Hist)
+	fmt.Println(err)
   return valAsbytes, err
 }
 
