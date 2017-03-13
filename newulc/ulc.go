@@ -149,13 +149,15 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 //***********************************************
 //* Create a newpolicy
 func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []string) ([]byte, error) {
+	fmt.Println("************* Unit Linked  New Policy****************")
 	if len(args) != 11 {
+	 	fmt.Println("Incorrect number of arguments. Expecting 11")
 		return nil, errors.New("Incorrect number of arguments. Expecting 11")
 	}
         count=0;
-	l := log.New(os.Stderr, "", 0)
-	l.Println("************* Unit Linked  New Policy****************")
-	l.Println("Policy ID="+stub.GetTxID())
+
+
+	fmt.Println("Policy ID="+stub.GetTxID())
   	var policy Policy 
 	if policies == nil {
 	  policies=make(map[string]string)
