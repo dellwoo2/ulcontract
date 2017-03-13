@@ -98,7 +98,7 @@ func (t *SimpleChaincode) update(stub shim.ChaincodeStubInterface, args []string
 	  var wa Wallet
 	  wa.User=args[0]
 	  wa.Policies=make(map[string]string)
-	  wa.Policies[args[1]]="Y"
+	  wa.Policies[args[1]]=args[2]
 	  register[args[0]]=wa
 	}
 
