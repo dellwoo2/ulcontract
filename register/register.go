@@ -40,7 +40,7 @@ type Wallet struct{
 
 var locked bool
 var register map[string]Wallet
-
+var policylist map[string]string
 func main() {
 	
 	err := shim.Start(new(SimpleChaincode))
@@ -57,6 +57,11 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	register=make(map[string]Wallet)
  	byt, _ := json.Marshal(register)
 	err := stub.PutState("register", byt)
+
+	policylist=make(map[string]string)
+ 	byt, _ = json.Marshal(policylist)
+	err = stub.PutState("policylist", byt)
+
 	locked=false
 	if err != nil {
 		fmt.Println(err)
@@ -91,6 +96,12 @@ func (t *SimpleChaincode) update(stub shim.ChaincodeStubInterface, args []string
   	register=make(map[string]Wallet)
   	json.Unmarshal(valAsbytes , &register)
 
+
+	valAsbytes, err = stub.GetState("policylist")
+  	policylist=make(map[string]string)
+  	json.Unmarshal(valAsbytes , &policylist)
+
+
     	fmt.Println("Update Register: user=" + args[0] +" Policy="+args[1] )
 	if w, ok :=register[args[0]] ; ok {
 		w.Policies[args[1]]="Y"
@@ -101,9 +112,15 @@ func (t *SimpleChaincode) update(stub shim.ChaincodeStubInterface, args []string
 	  wa.Policies[args[1]]=args[2]
 	  register[args[0]]=wa
 	}
+	policylist[args[1]]=args[0]
 
  	byt, _ := json.Marshal(register)
 	err = stub.PutState("register", byt)
+
+ 	byt, _ = json.Marshal(policylist)
+	err = stub.PutState("policylist", byt)
+
+
 	fmt.Println(err)
 	locked=false
 	return []byte("Updated"), err
