@@ -15,7 +15,7 @@
       <div id="logo">
         <div id="logo_text">
           <!-- class="logo_colour", allows you to change the colour of the text -->
-          <h1><a href="index.html">colour<span class="logo_colour">orange</span></a></h1>
+          <h1><a href="index.html">Insurance on<span class="logo_colour">Blockchain</span></a></h1>
           <h2>The first ever insurance on a Blockchain</h2>
         </div>
       </div>
@@ -59,18 +59,31 @@
       </div>
       <div id="content">
            <h2>Enter Details</h2>
-		<form action="http://127.0.0.1:8080/switch/ method="post" enctype="application/x-www-form-urlencoded">
-          <div class="form_settings">
-
+		<form action="http://127.0.0.1:8080/process/pay" method="get" enctype="application/x-www-form-urlencoded">
+         <form method="post" action="#" id="search_form">
+          <p>
+            <input class="search" type="text" name="search_field" value="Enter keywords....." />
+            <input name="search" type="image" style="border: 0; margin: 0 0 -9px 5px;" src="style/search.png" alt="Search" title="Search" />
+          </p>
+        </form>
+      </div>
+      <div id="content">
+           <h2>Enter Details</h2>
+		<form action="http://127.0.0.1:8080/process/switch/ method="get" enctype="application/x-www-form-urlencoded">
+            <div class="form_settings">
+		        <p><span>Policy</span><select id="policy" name="policy">
+				<option value="">Select</option>
+			{{ range $key , $value := . }}
+			<option value="{{$key}}">{{$key}}</option>
+			{{ end }}
+			</select></p>  
 			<p><span>Fund A</span><input type="text" name="funda" id="funda" value=""/></p>
 			<p><span>Fund B</span><input type="text" name="fundb" id="fundb" value=""/></p>
 			<p><span>Fund C</span><input type="text" name="fundc" id="fundc" value=""/></p>
 			<p><span>Fund D</span><input type="text" name="fundd" id="fundd" value=""/></p>
-           		<p style="padding-top: 15px"><span>&nbsp;</span><input class="submit" type="submit" name="name" value="Submit Application" /></p>
+           		<p style="padding-top: 15px"><span>&nbsp;</span><input class="submit" type="submit" name="name" value="Switch Funds" /></p>
 		</form>
           </div>
-        </form>
-      </div>
     </div>
     <div id="content_footer"></div>
     <div id="footer">

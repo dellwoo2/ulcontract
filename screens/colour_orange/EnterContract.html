@@ -62,7 +62,7 @@
 		<form action="http://127.0.0.1:8080/process/doit" method="get" enctype="application/x-www-form-urlencoded">
           <div class="form_settings">
 		        <p><span>Product</span><select id="product" name="product"><option value="">Select</option><option value="ULX">Unit Link Retire Happy</option><option value="ULY">Unit Link Die Happy</option></select></p>
-			<p><span>Contract ID</span><input type="text" name="cid" id="cid" readonly=true value=""/></p>
+			<p><span>Contract ID</span><input type="text" name="cid" id="cid" readonly=true value="{{.ContID}}"/></p>
 			<p><span>Owner ID</span><input type="text" name="owner" id="owner" value=""/></p>
 			<p><span>Owner Name</span><input type="text" name="name" id="name" value=""/></p>
 			<p><span>Owner DOB(dd.mm.yyyy)</span><input type="text" name="dob" id="dob" value=""/></p>

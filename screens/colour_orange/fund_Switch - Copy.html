@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <html>
-
+{{.}}
 <head>
   <title>Dannys Reliable Insurance</title>
   <meta name="description" content="website description" />
@@ -59,10 +59,19 @@
       </div>
       <div id="content">
            <h2>Enter Details</h2>
-		<form action="http://127.0.0.1:8080/process/pay method="get" enctype="application/x-www-form-urlencoded">
+		<form action="http://127.0.0.1:8080/switch/ method="get" enctype="application/x-www-form-urlencoded">
           <div class="form_settings">
-			<p><span>Payment Amount</span><input type="text" name="pay" id="pay" value=""/></p>
-           		<p style="padding-top: 15px"><span>&nbsp;</span><input class="submit" type="submit" name="name" value="Make Payment" /></p>
+		        <p><span>Policy</span><select id="policy" name="policy">
+				<option value="">Select</option>
+			{{ range $key , $value := . }}
+			<option value="{{$key}}">{{$key}}</option>
+			{{ end }}
+			</select></p>
+			<p><span>Fund A</span><input type="text" name="funda" id="funda" value=""/></p>
+			<p><span>Fund B</span><input type="text" name="fundb" id="fundb" value=""/></p>
+			<p><span>Fund C</span><input type="text" name="fundc" id="fundc" value=""/></p>
+			<p><span>Fund D</span><input type="text" name="fundd" id="fundd" value=""/></p>
+           		<p style="padding-top: 15px"><span>&nbsp;</span><input class="submit" type="submit" name="name" value="Switch Funds" /></p>
 		</form>
           </div>
         </form>

@@ -10,7 +10,27 @@ import (
 "time"
 "strings"
 //"strconv"
+"encoding/json"
 )
+type Res struct{
+	Status string
+	Message string
+ }
+
+type Ret struct{
+ Jsonrpc string
+ Result Res
+ Id string
+ }
+
+type Wallet struct{
+ User string
+ Policies map[string]string
+}
+
+var wa Wallet
+
+
 
 //*****************************************
 //* Contract Types
@@ -60,6 +80,8 @@ var glmanager string
 var commsmanager string
 var polid string
 var cont Contract
+var regid string
+ 
 type Page struct {
     Title string
     Body  []byte
@@ -132,6 +154,7 @@ fmt.Print("calling process\n")
 		 cont.Beneficiary=r.FormValue("beneficiary")
 		 cont.Email=r.FormValue("email")
 		 cont.ContID=createContract(cont)
+		 register(user,cont.ContID)
 	 	 //var cm map[string]string
 		  //x:=int64(count)
 		 //cm["000" + strconv.FormatInt( x ,10)]=ccid
@@ -149,19 +172,23 @@ fmt.Print("calling process\n")
  	}
 
 
-
-    p, err := loadPage("colour_orange/"+title)
-    //t, err := template.ParseFiles("colour_orange/EnterContract.html")
+    //**p, err := loadPage("colour_orange/"+title)
+    t, err := template.ParseFiles("colour_orange/"+title)
 	fmt.Print(err)
 	fmt.Print("\n")
-    	//t.Execute(w, x)
+	if title == "Payment.html" || title == "fund_Switch.html" {
+		fmt.Print("t.Execute(w, wa.Policies )")
+    	   t.Execute(w, wa.Policies )	
+	}else{
+    	   t.Execute(w, cont )
+        }
 	//fmt.Fprintln(w, string(p.Body))
-	w.Write(p.Body)
+	//**w.Write(p.Body)
 }
- 
+
 func signIn()(string){
    var jsonStr = []byte( `{
-  	"enrollId": "`+ user+`",
+  	"enrollId": "`+ user +`",
   	"enrollSecret": "`+secret+`"
 	}` )
     req, err := http.NewRequest("POST", rurl, bytes.NewBuffer(jsonStr))
@@ -183,6 +210,101 @@ func signIn()(string){
     fmt.Println(err)
    return  string(body)
 }
+
+func  policyList(user string  )(string){ 
+   var jsonStr = []byte( `
+{
+     "jsonrpc": "2.0",
+     "method": "query",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "name":"`+regid+`"
+         },
+         "ctorMsg": {
+             "function": "get",
+             "args": [
+		"`+user+`"
+             ]
+         },
+         "secureContext":"admin"
+     },
+     "id": 2
+ }
+` )
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+
+    fmt.Println("response Status:", resp.Status)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("POLICY LIST:", string(body))
+    //*************************************
+    // get the list & marshal it
+    var ret Ret
+    err=json.Unmarshal(body , &ret)
+    
+    json.Unmarshal([]byte(ret.Result.Message), &wa)
+          for key, value := range wa.Policies{
+		fmt.Println("KEY="+key+" Value="+value)	
+	  }	
+   return  string(body)
+}
+
+
+func  register(user string ,id string )(string){ 
+   var jsonStr = []byte( `
+{
+     "jsonrpc": "2.0",
+     "method": "invoke",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "name":"`+regid+`"
+         },
+         "ctorMsg": {
+             "function": "update",
+             "args": [
+		"`+user+`",
+           "`+id+`"
+             ]
+         },
+         "secureContext":"admin"
+     },
+     "id": 2
+ }
+` )
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+
+    fmt.Println("response Status:", resp.Status)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("Register:", string(body))
+    fmt.Println(err)
+   return  string(body)
+}
+
+
+
 func createContract( cont Contract)(string){
 
   args:="\""+ cont.Lf.Gender+"\"," +
@@ -356,7 +478,7 @@ glmanager= cfg.Section("").Key("GL_MANAGER").String()
 odsmanager= cfg.Section("").Key("ODS_MANAGER").String()
 commsmanager= cfg.Section("").Key("COMMS_MANAGER").String()
 ccid= cfg.Section("").Key("CCID").String()
-
+regid=cfg.Section("").Key("POLICY_REGISTER").String()
 fmt.Print(err)
 fmt.Print(url)
 fmt.Print(user)
@@ -367,6 +489,7 @@ fmt.Println(t.String())
 http.HandleFunc("/process/", process)
 http.Handle("/process/style/", http.StripPrefix("/process/style/", http.FileServer(http.Dir("/Go/src/github.com/dellwoo2/ulcontract/screens/style"))))
 http.HandleFunc("/edit/", editHandler)
+ policyList("admin" )
 server.ListenAndServe()
 }
 

@@ -42,13 +42,14 @@ type SimpleChaincode struct {
 var scheduler string
 //*****************************************
 //* Contract Types
-
+/***
 type Fund struct{
  FundId string
  Units  string
 }
+****/
 type Account struct{
-  Fnds [20]Fund
+  Fnds map[string]string
   LastvaluationDate string
   Valuation string
 }
@@ -202,6 +203,10 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 	h.Cont=policy.Cont
 	h.Args=args
 	policy.Hist[h.Tranid]=h
+
+	//************************************************
+	//* Funds 
+	policy.Cont.Acct.Fnds=make(map[string]string)
 
 	policies[policy.Cont.ContID]=policy.Cont.Status
         b, err := json.Marshal(policy)
@@ -431,32 +436,50 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
 
 func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args []string , policy Policy) ( Policy, error ) {
 	var contract Contract=policy.Cont
-    	var fnd[20]Fund
+    	var f map[string]string
+	f= make(map[string]string)
+    	var mv map[string]string
+	mv= make(map[string]string)	
         //******************************
-	// arg[1] is the funds array
-        json.Unmarshal([]byte(args[1]), &fnd)
-
-        policy.Cont.Acct.Fnds=fnd
-	policy.Cont=contract
+	// arg[1] is the map of funds & allocations strig, string 
+        json.Unmarshal([]byte(args[1]), &f)
+	//******************************
+	// Now loop round the array creating a map of unit changes
+	for k, v := range f {
+		if vv, ok :=policy.Cont.Acct.Fnds[k]; ok {
+			x, _ := strconv.ParseFloat( v , 10);
+			y, _ := strconv.ParseFloat( vv , 10);
+			mv[k]= strconv.FormatFloat( x  - y ,  'f' , 2,  64) 
+		}else{
+			x, _ := strconv.ParseFloat( v , 10);
+			mv[k]=strconv.FormatFloat( x ,  'f' , 2,  64)  
+		}
+		policy.Cont.Acct.Fnds[k]=v	
+	}
+        b, err := json.Marshal(mv)
+	postFundUpdate(policy, b )
 	return  policy, nil
 }
 
+func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
+	return  policy, nil
+}
 
 func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
-	var contract Contract=policy.Cont
+	//var contract Contract=policy.Cont
 	// payment is arg[1]
 	premium, _ := strconv.ParseFloat( args[1] , 10);
 
- 	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
-	valAsbytes, err := stub.GetState("Contract")
-    	json.Unmarshal(valAsbytes , &contract)
+ 	fmt.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
+	//valAsbytes, err := stub.GetState("Contract")
+    	//json.Unmarshal(valAsbytes , &contract)
 
-	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
+	i, _ := strconv.ParseFloat( policy.Cont.Acct.Valuation , 10);
 	i = i + float64(premium)
-        contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
- 	log.Print("DE***** Contract value="+contract.Acct.Valuation)
-        b, err := json.Marshal(contract)
-	err = 	stub.PutState("Contract", b)
+        policy.Cont.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
+ 	log.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
+       // b, err := json.Marshal(contract)
+	//err = 	stub.PutState("Contract", b)
 	//*************************
 	// GL Posting
 	var glt GLtran
@@ -469,25 +492,24 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 
 	//*************************************
 	//* Now set the policy in force 
-	if  contract.UWstatus=="Ready"{
-  		contract.Status="InForce"
-		t.activate(stub, args)	
+	if  policy.Cont.UWstatus=="Ready"{
+  		policy.Cont.Status="InForce"
+//		t.activate(stub, args)	
 
 		subject:="Your Policy is now in Force"
-		body:=`Dear Mr `+contract.Lf.Name+ ` #N Thank you for your payment of $`+strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your new policy #N we are pleased to inform you that your policy is now in force #N Many thanks`
+		body:=`Dear Mr `+policy.Cont.Lf.Name+ ` #N Thank you for your payment of $`+strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your new policy #N we are pleased to inform you that your policy is now in force #N Many thanks`
 		t.mailto(stub, subject , body , policy )
 	}else
 	{
 		//*****************************************************
 		// email
 		subject:="Thank you for your Payment"
-		body:=`Dear Mr `+ contract.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your policy #N Many thanks`
+		body:=`Dear Mr `+ policy.Cont.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your policy #N Many thanks`
  		t.mailto(stub, subject , body, policy )
 	}
-	contract.Status="IF"
-	policy.Cont=contract
- 	t.activate(stub, args )
-	return  policy, err
+	policy.Cont.Status="IF"
+ 	//t.activate(stub, args )
+	return  policy, _
 }
 
 func glPost( stub shim.ChaincodeStubInterface, glt GLtran, pid string)( error){
@@ -796,7 +818,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 
 func (t *SimpleChaincode) transactions(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
 	var valAsbytes []byte
-	err:=json.Unmarshal(valAsbytes , &policy.Hist)
+	err:=json.Unmarshal(valAsbytes , &policy)
 	fmt.Println(err)
   return valAsbytes, err
 }

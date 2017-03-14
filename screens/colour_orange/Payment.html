@@ -61,6 +61,13 @@
            <h2>Enter Details</h2>
 		<form action="http://127.0.0.1:8080/process/pay" method="get" enctype="application/x-www-form-urlencoded">
           <div class="form_settings">
+		        <p><span>Policy</span><select id="policy" name="policy">
+				<option value="">Select</option>
+			{{ range $key , $value := . }}
+			<option value="{{$key}}">{{$key}}</option>
+			{{ end }}
+
+			</select></p>
 			<p><span>Payment Amount</span><input type="text" name="pay" id="pay" value=""/></p>
            		<p style="padding-top: 15px"><span>&nbsp;</span><input class="submit" type="submit" name="name" value="Make Payment" /></p>
 		</form>
