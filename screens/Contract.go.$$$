@@ -161,6 +161,7 @@ fmt.Print("calling process\n")
 		 count++
 		 fmt.Println(ccid)
         	title="EnterContract.html"
+ 		policyList("admin" )
            } else {
 		fmt.Print("Update existing contract")
 	  }
@@ -170,8 +171,16 @@ fmt.Print("calling process\n")
 		payment( r.FormValue("pay"), cont )
         	title="Payment.html"
  	}
-
-	cont.ContID="DFDFD"
+	if title=="funds" {
+    		var f map[string]string
+		f= make(map[string]string)
+		f["A"]=r.FormValue("funda")
+		f["B"]=r.FormValue("fundb")
+		f["C"]=r.FormValue("fundc")
+		f["D"]=r.FormValue("fundd")
+		fundupdate(cont.ContID, f)
+        	title="fund_Switch.html"
+	}
 
     //**p, err := loadPage("colour_orange/"+title)
     t, err := template.ParseFiles("colour_orange/"+title)
@@ -185,6 +194,47 @@ fmt.Print("calling process\n")
         }
 	//fmt.Fprintln(w, string(p.Body))
 	//**w.Write(p.Body)
+}
+
+func fundupdate(contid string,  f map[string]string)(){
+  b, err := json.Marshal(f )
+  var jsonStr = []byte( `
+  {
+     "jsonrpc": "2.0",
+     "method": "invoke",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "name":"`+ccid+`"
+         },
+         "ctorMsg": {
+             "function": "fundAllocation",
+             "args": [
+		"`+contid+`",
+		"`+string(b)+`",
+             ]
+         },
+         "secureContext":"admin"
+     },
+     "id": 2
+ }` )
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+
+    fmt.Println("response Status:", resp.Status)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("Fund Update:", string(body))
+    fmt.Println(err)
 }
 
 func signIn()(string){

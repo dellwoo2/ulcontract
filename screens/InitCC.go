@@ -146,8 +146,38 @@ func Initialise()(string){
   var odsmanager string
   var glmanager string
   var commsmanager string
+  var fundmanager string
   var ccid string
-  jstr:=`{
+  var policyregister string
+ jstr:=`{
+     "jsonrpc": "2.0",
+     "method": "deploy",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "path": "https://github.com/dellwoo2/ulcontract/fund"
+         },
+         "ctorMsg": {
+             "function": "init",
+             "args": [
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 1
+  }
+ `
+    rsp:=Invoke( jstr)
+    //*******************************
+    // get the CCID for comms
+    i:= strings.LastIndex( string(rsp) , "message\":\"" )
+    fmt.Println("FUND CCID="+ string(rsp)[i+10:i+138])
+    fundmanager=rsp[i+10:i+138]
+
+
+
+//*********************************
+  jstr=`{
      "jsonrpc": "2.0",
      "method": "deploy",
      "params": {
@@ -165,13 +195,39 @@ func Initialise()(string){
      "id": 1
   }
  `
-    rsp:=Invoke( jstr)
+    rsp=Invoke( jstr)
     //*******************************
     // get the CCID for comms
-    i:= strings.LastIndex( string(rsp) , "message\":\"" )
+    i= strings.LastIndex( string(rsp) , "message\":\"" )
     fmt.Println("COMMS CCID="+ string(rsp)[i+10:i+138])
     commsmanager=rsp[i+10:i+138]
+//*********************************
+  jstr=`{
+     "jsonrpc": "2.0",
+     "method": "deploy",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "path": "https://github.com/dellwoo2/ulcontract/register"
+         },
+         "ctorMsg": {
+             "function": "init",
+             "args": [
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 1
+  }
+ `
+    rsp=Invoke( jstr)
+    //*******************************
+    // get the CCID for policy register
+    i= strings.LastIndex( string(rsp) , "message\":\"" )
+    policyregister=rsp[i+10:i+138]
+    fmt.Println("Register CCID="+ policyregister)
 
+//************************************************
  jstr=`{
      "jsonrpc": "2.0",
      "method": "deploy",
@@ -267,6 +323,7 @@ rsp=Invoke( jstr)
  		"`+ odsmanager +`", 
 		"`+ commsmanager +`",
  		"`+ timerccid +`", 
+ 		"`+ fundmanager +`", 
 		"`+ url +`"
              ]
          },

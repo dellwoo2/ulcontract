@@ -114,6 +114,7 @@ var url string
 var glmanager string
 var odsmanager string
 var commsmanager string
+var fundmanager string 
 func main() {
 
 	err := shim.Start(new(SimpleChaincode))
@@ -134,12 +135,14 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	odsmanager=args[1]
 	commsmanager=args[2]
 	scheduler=args[3]
-	url=args[4]
+	fundmanager=args[4]
+	url=args[5]
 	err := 	stub.PutState("scheduler",[]byte(scheduler) )
 	err = 	stub.PutState("url",[]byte(url) )
 	err = 	stub.PutState("glmanager",[]byte(glmanager) )
 	err = 	stub.PutState("odsmanager",[]byte(odsmanager) )
 	err = 	stub.PutState("commsmanager",[]byte(commsmanager) )
+	err = 	stub.PutState("fundmanager",[]byte(fundmanager) )
         //fmt.Println( xx.A )
 	if err != nil {
 		return nil, err
@@ -156,8 +159,6 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 		return nil, errors.New("Incorrect number of arguments. Expecting 11")
 	}
         count=0;
-
-
 	fmt.Println("Policy ID="+stub.GetTxID())
   	var policy Policy 
 	if policies == nil {
@@ -435,7 +436,7 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
 }
 
 func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args []string , policy Policy) ( Policy, error ) {
-	var contract Contract=policy.Cont
+	//var contract Contract=policy.Cont
     	var f map[string]string
 	f= make(map[string]string)
     	var mv map[string]string
@@ -458,11 +459,45 @@ func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args 
 	}
         b, err := json.Marshal(mv)
 	postFundUpdate(policy, b )
-	return  policy, nil
+	return  policy, err
 }
 
 func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
-	return  policy, nil
+	 var jsonStr = []byte( `{
+   	  "jsonrpc": "2.0",
+    	 "method": "invoke",
+    	 "params": {
+      	   "type": 1,
+     	    "chaincodeID": {
+      	       "name":"`+fundmanager+`"
+         },
+         "ctorMsg": {
+             "function": "update",
+             "args": [
+                 "`+ string(mv)+`" 
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 3
+    }` )
+    req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+
+    fmt.Println("Fund update Satus:", resp.Status)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("Fund Update Body:", string(body))
+    return  policy, err
 }
 
 func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
@@ -509,7 +544,7 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 	}
 	policy.Cont.Status="IF"
  	//t.activate(stub, args )
-	return  policy, _
+	return  policy, nil
 }
 
 func glPost( stub shim.ChaincodeStubInterface, glt GLtran, pid string)( error){

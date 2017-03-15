@@ -117,7 +117,7 @@ func (t *SimpleChaincode) update(stub shim.ChaincodeStubInterface, args []string
  	byt, _ := json.Marshal(register)
 	err = stub.PutState("register", byt)
 
- 	byt, _ := json.Marshal(policylist)
+ 	byt, _ = json.Marshal(policylist)
 	err = stub.PutState("policylist", byt)
 
 

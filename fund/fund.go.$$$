@@ -193,7 +193,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 	} else if function == "fundprice" { //read a variable
 		return t.fundprice(stub, args)
 	} else if function == "getjournal" { //pass back a journal
-		return t.fund(stub, args)
+		return t.getjournal(stub, args)
 	} 
 	fmt.Println("query did not find func: " + function)
 

@@ -80,6 +80,7 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	fmt.Println("***** Init Fund Manager ********* ")
 	return nil, nil
 }
 
