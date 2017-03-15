@@ -291,8 +291,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	err = 	stub.PutState(policy.Cont.ContID, b)
 
 	//**********************************
-	//* Save Ploicies map with new policy status
+	//* Save Plicies map with new policy status
+        policies=make(map[string]string )
+	valAsbytes, _ = stub.GetState("policies")
+    	json.Unmarshal(valAsbytes , &policies)
+	
         policies[policy.Cont.ContID]=policy.Cont.Status
+
         b, err = json.Marshal(policies)
 	err = 	stub.PutState("policies", b)
 
@@ -460,6 +465,7 @@ func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args 
 }
 
 func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
+	s:=strings.Replace(string(mv), "\"", "\\\"", -1)
 	 var jsonStr = []byte( `{
    	  "jsonrpc": "2.0",
     	 "method": "invoke",
@@ -471,7 +477,7 @@ func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
          "ctorMsg": {
              "function": "updateFunds",
              "args": [
-                 "`+ string(mv)+`" 
+                 "`+ s+`" 
              ]
          },
          "secureContext": "admin"
