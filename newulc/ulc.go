@@ -111,10 +111,8 @@ var count int
 var   xx = shared.Args{1, 2}
 var invokeTran string
 var url string
-var glmanager string
-var odsmanager string
+var manager string
 var commsmanager string
-var fundmanager string 
 func main() {
 
 	err := shim.Start(new(SimpleChaincode))
@@ -125,24 +123,23 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if len(args) != 6 {
+	if len(args) != 4 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 5 " )
 	}
         count=0;
 	l := log.New(os.Stderr, "", 0)
 	l.Println("*************INIT CHAINCODE Unit Linked ****************")
-	glmanager=args[0]
-	odsmanager=args[1]
-	commsmanager=args[2]
-	scheduler=args[3]
-	fundmanager=args[4]
-	url=args[5]
+	manager=args[0]
+	commsmanager=args[1]
+	scheduler=args[2]
+	url=args[3]
 	err := 	stub.PutState("scheduler",[]byte(scheduler) )
 	err = 	stub.PutState("url",[]byte(url) )
-	err = 	stub.PutState("glmanager",[]byte(glmanager) )
-	err = 	stub.PutState("odsmanager",[]byte(odsmanager) )
+//	err = 	stub.PutState("glmanager",[]byte(glmanager) )
+//	err = 	stub.PutState("odsmanager",[]byte(odsmanager) )
 	err = 	stub.PutState("commsmanager",[]byte(commsmanager) )
-	err = 	stub.PutState("fundmanager",[]byte(fundmanager) )
+//	err = 	stub.PutState("fundmanager",[]byte(fundmanager) )
+	err = 	stub.PutState("manager",[]byte(manager) )
         //fmt.Println( xx.A )
 	if err != nil {
 		return nil, err
@@ -469,7 +466,7 @@ func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
     	 "params": {
       	   "type": 1,
      	    "chaincodeID": {
-      	       "name":"`+fundmanager+`"
+      	       "name":"`+manager+`"
          },
          "ctorMsg": {
              "function": "updateFunds",
@@ -562,8 +559,8 @@ func glPost( stub shim.ChaincodeStubInterface, glt GLtran, pid string)( error){
 	return   err
 }
 func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error) {
-	valAsbytes, err := stub.GetState("glmanager")
-	glmanager=string(valAsbytes)
+	valAsbytes, err := stub.GetState("manager")
+	manager=string(valAsbytes)
 
 
 	valAsbytes, err = stub.GetState("url")
@@ -577,7 +574,7 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
     	 "params": {
       	   "type": 1,
      	    "chaincodeID": {
-      	       "name":"`+glmanager+`"
+      	       "name":"`+manager+`"
          },
          "ctorMsg": {
              "function": "updateT",
@@ -609,8 +606,8 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
     return err
 }
 func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) {
-	valAsbytes, err := stub.GetState("odsmanager")
-	odsmanager=string(valAsbytes)
+	valAsbytes, err := stub.GetState("manager")
+	manager=string(valAsbytes)
 	valAsbytes, err = stub.GetState("url")
 	url=string(valAsbytes)
         b, err := json.Marshal(ods)
@@ -621,7 +618,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
     	 "params": {
       	   "type": 1,
      	    "chaincodeID": {
-      	       "name":"`+odsmanager+`"
+      	       "name":"`+manager+`"
          },
          "ctorMsg": {
              "function": "updateOds",
