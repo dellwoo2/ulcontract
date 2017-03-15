@@ -211,13 +211,14 @@ func fundupdate(contid string,  f map[string]string)(){
              "function": "fundAllocation",
              "args": [
 		"`+contid+`",
-		"`+string(b)+`",
+		"`+strings.Replace(string(b),"\"","\\\"",-1) +`"
              ]
          },
          "secureContext":"admin"
      },
      "id": 2
  }` )
+    fmt.Println("Fund request :"+string( jsonStr) )	
     req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
     req.Header.Set("X-Custom-Header", "myvalue")
     req.Header.Set("Content-Type", "application/json")

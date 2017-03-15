@@ -174,8 +174,6 @@ func Initialise()(string){
     fmt.Println("FUND CCID="+ string(rsp)[i+10:i+138])
     fundmanager=rsp[i+10:i+138]
 
-
-
 //*********************************
   jstr=`{
      "jsonrpc": "2.0",

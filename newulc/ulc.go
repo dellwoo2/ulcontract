@@ -472,7 +472,7 @@ func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
       	       "name":"`+fundmanager+`"
          },
          "ctorMsg": {
-             "function": "update",
+             "function": "updateFunds",
              "args": [
                  "`+ string(mv)+`" 
              ]
@@ -624,7 +624,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
       	       "name":"`+odsmanager+`"
          },
          "ctorMsg": {
-             "function": "update",
+             "function": "updateOds",
              "args": [
                  "`+ s +`" 
              ]

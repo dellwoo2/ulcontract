@@ -224,9 +224,8 @@ func Initialise()(string){
     //*******************************
     // get the CCID for policy register
     i= strings.LastIndex( string(rsp) , "message\":\"" )
-    fmt.Println("Register CCID="+ string(rsp)[i+10:i+138])
     policyregister=rsp[i+10:i+138]
-
+    fmt.Println("Register CCID="+ policyregister)
 
 //************************************************
  jstr=`{

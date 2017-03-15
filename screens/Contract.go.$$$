@@ -171,7 +171,7 @@ fmt.Print("calling process\n")
 		payment( r.FormValue("pay"), cont )
         	title="Payment.html"
  	}
-	if title=="funds" {
+	if title=="fund" {
     		var f map[string]string
 		f= make(map[string]string)
 		f["A"]=r.FormValue("funda")
@@ -211,13 +211,14 @@ func fundupdate(contid string,  f map[string]string)(){
              "function": "fundAllocation",
              "args": [
 		"`+contid+`",
-		"`+string(b)+`",
+		"`+string(b)+`"
              ]
          },
          "secureContext":"admin"
      },
      "id": 2
  }` )
+    fmt.Println("Fund request :"+string( jsonStr) )	
     req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
     req.Header.Set("X-Custom-Header", "myvalue")
     req.Header.Set("Content-Type", "application/json")

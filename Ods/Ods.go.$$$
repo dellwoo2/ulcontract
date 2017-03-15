@@ -159,7 +159,6 @@ func (t *SimpleChaincode) Crtjournal(stub shim.ChaincodeStubInterface, args []st
 	err = stub.PutState("transactions", byt)
  	jb, _ := json.Marshal(journal)
 	locked=false
-	jb, _ := json.Marshal(journal)
 	invokeTran:=stub.GetTxID()
 	err = stub.PutState(invokeTran, jb)
 

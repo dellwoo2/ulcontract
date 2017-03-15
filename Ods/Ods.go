@@ -113,7 +113,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// Handle different functions
 	if function == "init" {
 		return t.Init(stub, "init", args)
-	}else if function == "update" {
+	}else if function == "updateOds" {
 		return t.update(stub, args)
 	}else if function == "Crtjournal" {
 		return t.Crtjournal(stub, args)

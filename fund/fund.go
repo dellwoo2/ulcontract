@@ -31,12 +31,6 @@ import (
 type SimpleChaincode struct {
 }
 
-
-type Fund struct{
- FundId string
- Units  string
-}
-
 type ContractMovement struct{
  Fundunits map[string]string
  ContID string
@@ -90,7 +84,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// Handle different functions
 	if function == "init" {
 		return t.Init(stub, "init", args)
-	}else if function == "update" {
+	}else if function == "updateFunds" {
 		return t.update(stub, "init", args)
 	}else if function == "crtjournal" {
 		return t.crtjournal(stub, "init", args)

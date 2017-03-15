@@ -125,7 +125,7 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
-	if len(args) != 5 {
+	if len(args) != 6 {
 		return nil, errors.New("Incorrect number of arguments. Expecting 5 " )
 	}
         count=0;
@@ -472,7 +472,7 @@ func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
       	       "name":"`+fundmanager+`"
          },
          "ctorMsg": {
-             "function": "update",
+             "function": "updateFunds",
              "args": [
                  "`+ string(mv)+`" 
              ]

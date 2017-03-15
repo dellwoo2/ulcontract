@@ -31,12 +31,6 @@ import (
 type SimpleChaincode struct {
 }
 
-
-type Fund struct{
- FundId string
- Units  string
-}
-
 type ContractMovement struct{
  Fundunits map[string]string
  ContID string
@@ -80,6 +74,7 @@ func main() {
 
 // Init resets all the things
 func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string, args []string) ([]byte, error) {
+	fmt.Println("***** Init Fund Manager ********* ")
 	return nil, nil
 }
 
