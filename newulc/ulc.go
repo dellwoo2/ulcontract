@@ -291,7 +291,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	err = 	stub.PutState(policy.Cont.ContID, b)
 
 	//**********************************
-	//* Save Plicies map with new policy status
+	//* Save Policies map with new policy status
         policies=make(map[string]string )
 	valAsbytes, _ = stub.GetState("policies")
     	json.Unmarshal(valAsbytes , &policies)
@@ -509,13 +509,13 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 	// payment is arg[1]
 	premium, _ := strconv.ParseFloat( args[1] , 10);
 
- 	fmt.Print("DE***** Contract value="+policy.Cont.Acct.Valuation + "Payment="+args[1])
+ 	log.Print("DE***** Contract value="+policy.Cont.Acct.Valuation + "Payment="+args[1])
 
 
 	i, _ := strconv.ParseFloat( policy.Cont.Acct.Valuation , 10);
 	i = i + float64(premium)
         policy.Cont.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
- 	log.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
+ 	log.Print("DE***** Contract value now="+policy.Cont.Acct.Valuation)
 
 	//*************************
 	// GL Posting
@@ -705,15 +705,11 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
         fmc:=10
 	adc:=12
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
-	valAsbytes, err := stub.GetState("Contract")
-    	json.Unmarshal(valAsbytes , &contract)
 
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
 	i = i - float64(coi+fmc+adc)
         contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
-        b, err := json.Marshal(contract)
-	err = 	stub.PutState("Contract", b)
 	//*************************
 	// GL Posting COI
 	var glt GLtran
@@ -740,7 +736,7 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
  	glt.Cr=strconv.FormatFloat(-float64(adc),  'f' , 2,  64)
 	glPost(stub, glt , "ADC" )
 	policy.Cont=contract
-	return policy, err
+	return policy, nil
 
 }
 
