@@ -477,6 +477,7 @@ func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
          "ctorMsg": {
              "function": "updateFunds",
              "args": [
+		 "`+policy.Cont.ContID+`",
                  "`+ s+`" 
              ]
          },
@@ -504,20 +505,18 @@ func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
 }
 
 func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
-	//var contract Contract=policy.Cont
+
 	// payment is arg[1]
 	premium, _ := strconv.ParseFloat( args[1] , 10);
 
- 	fmt.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
-	//valAsbytes, err := stub.GetState("Contract")
-    	//json.Unmarshal(valAsbytes , &contract)
+ 	fmt.Print("DE***** Contract value="+policy.Cont.Acct.Valuation + "Payment="+args[1])
+
 
 	i, _ := strconv.ParseFloat( policy.Cont.Acct.Valuation , 10);
 	i = i + float64(premium)
         policy.Cont.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
-       // b, err := json.Marshal(contract)
-	//err = 	stub.PutState("Contract", b)
+
 	//*************************
 	// GL Posting
 	var glt GLtran
@@ -530,21 +529,28 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 
 	//*************************************
 	//* Now set the policy in force 
-	if  policy.Cont.UWstatus=="Ready"{
-  		policy.Cont.Status="InForce"
-//		t.activate(stub, args)	
 
+	if 	policy.Cont.Status=="IF" {
+		//*****************************************************
+		// email
+		subject:="Thank you for your Payment"
+		body:=`Dear Mr `+ policy.Cont.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your policy `+policy.Cont.ContID+` #N Many thanks`
+ 		t.mailto(stub, subject , body, policy )
+	} else{
+
+	  if  policy.Cont.UWstatus=="Ready"{
+  		policy.Cont.Status="InForce"
 		subject:="Your Policy is now in Force"
 		body:=`Dear Mr `+policy.Cont.Lf.Name+ ` #N Thank you for your payment of $`+strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your new policy #N we are pleased to inform you that your policy is now in force #N Many thanks`
 		t.mailto(stub, subject , body , policy )
-	}else
-	{
+	  }else{
 		//*****************************************************
 		// email
 		subject:="Thank you for your Payment"
 		body:=`Dear Mr `+ policy.Cont.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your policy #N Many thanks`
  		t.mailto(stub, subject , body, policy )
-	}
+	  }
+       }
 	policy.Cont.Status="IF"
  	//t.activate(stub, args )
 	return  policy, nil
@@ -856,7 +862,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 
 func (t *SimpleChaincode) transactions(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
 	var valAsbytes []byte
-	err:=json.Unmarshal(valAsbytes , &policy)
+    	valAsbytes, err :=json.Marshal( policy.Hist )
 	fmt.Println(err)
   return valAsbytes, err
 }
@@ -870,7 +876,7 @@ func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string ,
 		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
 		return nil, errors.New(jsonResp)
 	}
-    	valAsbytes, err :=json.Marshal( policy );
+    	valAsbytes, err :=json.Marshal( policy)
 
 	return valAsbytes, nil
 }
