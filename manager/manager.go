@@ -302,6 +302,7 @@ func (t *SimpleChaincode) CrtOdsjournal(stub shim.ChaincodeStubInterface, args [
 		if value.Posted=="N" {
 	    		fmt.Println("ODS JournalKey:", key, "ODS Journal Value:", value)
 			value.Posted="Y"
+			transactions[key]=value
 			journal[key]=value
 		}
     	}
@@ -369,6 +370,7 @@ func (t *SimpleChaincode) CrtGljournal(stub shim.ChaincodeStubInterface, args []
 		if value.Stat=="N" {
 	    		fmt.Println("JournalKey:", key, "Journal Value:", value)
 			value.Stat="Y"
+			gltran[key]=value
 			journal[key]=value
 		}
     	}
