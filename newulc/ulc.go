@@ -853,6 +853,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.valuation(stub, args, policy)
 	} else if function == "transactions" {
 		return t.transactions(stub, args, policy)
+	} else if function == "dump" {
+		return t.dump(stub, args, policy)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -863,20 +865,15 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 func (t *SimpleChaincode) transactions(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
 	var valAsbytes []byte
     	valAsbytes, err :=json.Marshal( policy.Hist )
-	fmt.Println(err)
+	fmt.Println( "TRANSACTION HISTORY="+ string(valAsbytes))
+	fmt.Println( err)
   return valAsbytes, err
 }
 
 
 // read - query function to read key/value pair
-func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string , policy Policy ) ([]byte, error) {
-	var key , jsonResp string
-	var err error
-	if err != nil {
-		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
-		return nil, errors.New(jsonResp)
-	}
+func (t *SimpleChaincode) dump(stub shim.ChaincodeStubInterface, args []string , policy Policy ) ([]byte, error) {
     	valAsbytes, err :=json.Marshal( policy)
-
-	return valAsbytes, nil
+	fmt.Println( "POLICY DUMP="+ string(valAsbytes))
+	return valAsbytes, err
 }
