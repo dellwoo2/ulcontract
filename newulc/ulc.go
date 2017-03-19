@@ -460,11 +460,18 @@ func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args 
 		policy.Cont.Acct.Fnds[k]=v	
 	}
         b, err := json.Marshal(mv)
-	postFundUpdate(policy, b )
+	postFundUpdate(stub, policy, b )
 	return  policy, err
 }
 
-func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
+func 	postFundUpdate(stub shim.ChaincodeStubInterface, policy Policy , mv  []byte )( Policy, error ) {
+	_ , errx := stub.GetState("FM"+ invokeTran)
+	if errx == nil {
+		fmt.Println("Fund Manager update already done")
+	}
+	stub.PutState("FM"+ invokeTran , []byte("Y") )
+
+
 	s:=strings.Replace(string(mv), "\"", "\\\"", -1)
 	 var jsonStr = []byte( `{
    	  "jsonrpc": "2.0",
@@ -574,8 +581,11 @@ func glPost( stub shim.ChaincodeStubInterface, glt GLtran, pid string)( error){
 func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error) {
 	valAsbytes, err := stub.GetState("manager")
 	manager=string(valAsbytes)
-
-
+	_ ,errx := stub.GetState("GL"+ invokeTran) 
+        if errx == nil {
+		fmt.Println("GL Posting already done")
+	}
+	stub.PutState("GL"+ invokeTran , []byte("Y") )
 	valAsbytes, err = stub.GetState("url")
 	url=string(valAsbytes)
         b, err := json.Marshal(glt)
@@ -619,6 +629,13 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
     return err
 }
 func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) {
+	 _ , errx := stub.GetState("ODS"+ invokeTran) 
+	if errx == nil {
+		fmt.Println("ODS Posting already done")
+	}
+	stub.PutState("ODS"+ invokeTran , []byte("Y") )
+
+
 	valAsbytes, err := stub.GetState("manager")
 	manager=string(valAsbytes)
 	valAsbytes, err = stub.GetState("url")
