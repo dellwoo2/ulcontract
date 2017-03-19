@@ -200,6 +200,7 @@ func (t *SimpleChaincode) updateFunds(stub shim.ChaincodeStubInterface, function
 	}
 	locked=true
 	var cf ContractMovement
+	contractmovements=make( map[string]ContractMovement) 
 	cf.ContID=args[0]
 
 	fu:=make( map[string]string )
