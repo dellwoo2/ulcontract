@@ -485,6 +485,7 @@ func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
      },
      "id": 3
     }` )
+    fmt.Println(string(jsonStr))
     req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
     req.Header.Set("X-Custom-Header", "myvalue")
     req.Header.Set("Content-Type", "application/json")
