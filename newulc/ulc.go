@@ -468,6 +468,7 @@ func 	postFundUpdate(stub shim.ChaincodeStubInterface, policy Policy , mv  []byt
 	_ , errx := stub.GetState("FM"+ invokeTran)
 	if errx == nil {
 		fmt.Println("Fund Manager update already done")
+		stub.PutState("FM"+ invokeTran , []byte("Y") )
 	}
 	stub.PutState("FM"+ invokeTran , []byte("Y") )
 
@@ -584,6 +585,7 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
 	_ ,errx := stub.GetState("GL"+ invokeTran) 
         if errx == nil {
 		fmt.Println("GL Posting already done")
+		stub.PutState("GL"+ invokeTran , []byte("Y") )
 	}
 	stub.PutState("GL"+ invokeTran , []byte("Y") )
 	valAsbytes, err = stub.GetState("url")
@@ -632,6 +634,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
 	 _ , errx := stub.GetState("ODS"+ invokeTran) 
 	if errx == nil {
 		fmt.Println("ODS Posting already done")
+		stub.PutState("ODS"+ invokeTran , []byte("Y") )
 	}
 	stub.PutState("ODS"+ invokeTran , []byte("Y") )
 
