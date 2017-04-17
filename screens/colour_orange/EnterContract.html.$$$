@@ -27,27 +27,28 @@
           <li><a href="fund_Switch.html">Fund Switch</a></li>
           <li><a href="Payment.html">Payment</a></li>
           <li><a href="Surrender.html">Surrender</a></li>
+          <li><a href="Txn.html">Transactions</a></li>
         </ul>
       </div>
     </div>
     <div id="content_header"></div>
     <div id="site_content">
       <div class="sidebar">
-        <!-- insert your sidebar items here -->
+   <!-- insert your sidebar items here -->
         <h3>Latest News</h3>
-        <h4>New Website Launched</h4>
-        <h5>January 1st, 2010</h5>
-        <p>2010 sees the redesign of our website. Take a look around and let us know what you think.<br /><a href="#">Read more</a></p>
+        <h4>ChainCode Becomes real</h4>
+        <h5>March 2017</h5>
+        <p>Insurance finds its way onto chaincode<br /><a href="#">Read more</a></p>
         <p></p>
-        <h4>New Website Launched</h4>
-        <h5>January 1st, 2010</h5>
-        <p>2010 sees the redesign of our website. Take a look around and let us know what you think.<br /><a href="#">Read more</a></p>
+        <h4>First blockchain Insurance </h4>
+        <h5>September 2017</h5>
+        <p>2017 sees the Practical application of Smart Contracts at last<br /><a href="#">Read more</a></p>
         <h3>Useful Links</h3>
         <ul>
-          <li><a href="#">link 1</a></li>
-          <li><a href="#">link 2</a></li>
-          <li><a href="#">link 3</a></li>
-          <li><a href="#">link 4</a></li>
+          <li><a href="#">ferrets</a></li>
+          <li><a href="#">more ferrets</a></li>
+          <li><a href="#">ferret fake news</a></li>
+          <li><a href="#">ferrets fighting</a></li>
         </ul>
         <h3>Search</h3>
         <form method="post" action="#" id="search_form">
@@ -62,18 +63,18 @@
 		<form action="http://127.0.0.1:8080/process/doit" method="get" enctype="application/x-www-form-urlencoded">
           <div class="form_settings">
 		        <p><span>Product</span><select id="product" name="product"><option value="">Select</option><option value="ULX">Unit Link Retire Happy</option><option value="ULY">Unit Link Die Happy</option></select></p>
-			<p><span>Contract ID</span><input type="text" name="cid" id="cid" readonly=true value=""/></p>
-			<p><span>Owner ID</span><input type="text" name="owner" id="owner" value=""/></p>
-			<p><span>Owner Name</span><input type="text" name="name" id="name" value=""/></p>
-			<p><span>Owner DOB(dd.mm.yyyy)</span><input type="text" name="dob" id="dob" value=""/></p>
+			<p><span>Contract ID</span><input type="text" name="cid" id="cid" readonly=true value="{{.ContID}}"/></p>
+			<p><span>Owner ID</span><input type="text" name="owner" id="owner" value="{{.Owner}}"/></p>
+			<p><span>Owner Name</span><input type="text" name="name" id="name" value="{{.Lf.Name}}"/></p>
+			<p><span>Owner DOB(dd.mm.yyyy)</span><input type="text" name="dob" id="dob" value="{{.Lf.Dob}}"/></p>
           		<p><span>Gender</span><select id="gender" name="gender"><option value="">Select</option><option value="M">Male</option><option value="F">Female</option></select></p>
        			<p><span>Smoker</span><select id="smoker" name="smoker"><option value="">Select</option><option value="Y">Yes</option><option value="N">No</option></select></p>
-			<p><span>Sum Insured</span><input type="text" name="si" id="si" value=""/></p>
-			<p><span>Start Date</span><input type="text" name="start" id="start" value=""/></p>
-			<p><span>Term of Policy</span><input type="text" name="term" id="term" value=""/></p>
+			<p><span>Sum Insured</span><input type="text" name="si" id="si" value="{{.SumAssured}}"/></p>
+			<p><span>Start Date</span><input type="text" name="start" id="start" value="{{.StartDate}}"/></p>
+			<p><span>Term of Policy</span><input type="text" name="term" id="term" value="{{.Term}}"/></p>
           		<p><span>Payment Frequency</span><select id="freq" name="freq"><option value="">Select</option><option value="M">Monthly</option><option value="Y">Yearly</option></select></p>
-			<p><span>Beneficiary ID</span><input type="text" name="beneficiary" id="beneficiary" value=""/></p>
-			<p><span>email</span><input type="text" name="email" id="email" value=""/></p>
+			<p><span>Beneficiary ID</span><input type="text" name="beneficiary" id="beneficiary" value="{{.Beneficiary}}"/></p>
+			<p><span>email</span><input type="text" name="email" id="email" value="{{.Email}}"/></p>
            		<p style="padding-top: 15px"><span>&nbsp;</span><input class="submit" type="submit" name="name" value="Submit Application" /></p>
 		</form>
           </div>

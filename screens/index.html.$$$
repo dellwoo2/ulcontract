@@ -15,7 +15,7 @@
       <div id="logo">
         <div id="logo_text">
           <!-- class="logo_colour", allows you to change the colour of the text -->
-          <h1><a href="index.html">colour<span class="logo_colour">orange</span></a></h1>
+          <h1><a href="index.html">Insurance on<span class="logo_colour">Blockchain</span></a></h1>
           <h2>The first ever insurance on a Blockchain</h2>
         </div>
       </div>
@@ -27,6 +27,7 @@
           <li><a href="fund_Switch.html">Fund Switch</a></li>
           <li><a href="Payment.html">Payment</a></li>
           <li><a href="Surrender.html">Surrender</a></li>
+          <li><a href="Txn.html">Transactions</a></li>
         </ul>
       </div>
     </div>

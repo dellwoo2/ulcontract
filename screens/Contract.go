@@ -178,6 +178,16 @@ fmt.Print("calling process\n")
 		f["B"]=r.FormValue("fundb")
 		f["C"]=r.FormValue("fundc")
 		f["D"]=r.FormValue("fundd")
+	 	cont.Acct.Fnds[0].FundId="A"
+	 	cont.Acct.Fnds[0].Units=f["A"]
+	 	cont.Acct.Fnds[1].FundId="B"
+	 	cont.Acct.Fnds[1].Units=f["B"]
+	 	cont.Acct.Fnds[2].FundId="C"
+	 	cont.Acct.Fnds[2].Units=f["C"]
+	 	cont.Acct.Fnds[3].FundId="D"
+	 	cont.Acct.Fnds[3].Units=f["D"]
+
+
 		fundupdate(cont.ContID, f)
         	title="fund_Switch.html"
 	}
@@ -358,6 +368,14 @@ func  register(user string ,id string )(string){
 
 
 func createContract( cont Contract)(string){
+	 cont.Acct.Fnds[0].FundId="A"
+	 cont.Acct.Fnds[0].Units="20"
+	 cont.Acct.Fnds[1].FundId="B"
+	 cont.Acct.Fnds[1].Units="20"
+	 cont.Acct.Fnds[2].FundId="C"
+	 cont.Acct.Fnds[2].Units="20"
+	 cont.Acct.Fnds[3].FundId="D"
+	 cont.Acct.Fnds[3].Units="20"
 
   args:="\""+ cont.Lf.Gender+"\"," +
 	"\""+ cont.Lf.Dob +"\"," +

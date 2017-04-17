@@ -764,8 +764,8 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 
 func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
 	var contract Contract=policy.Cont
-	subject:="Your Monthly Statement for "+contract.ContID 
-	body:= `Your Statement of account: #N Account Holder:`+contract.Owner+` #N Value:`+contract.Acct.Valuation+` #N Yours Sincerely, Danny `
+	subject:="Your Monthly Statement "
+	body:= `Your Statement of account: #N Account Holder:`+contract.Owner+`#NPolicy No: `+contract.ContID +` #N Value:`+contract.Acct.Valuation+` #N Yours Sincerely, Danny `
 	t.mailto(stub, subject , body, policy )
  return nil,nil
 }

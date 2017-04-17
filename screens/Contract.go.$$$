@@ -211,7 +211,7 @@ func fundupdate(contid string,  f map[string]string)(){
              "function": "fundAllocation",
              "args": [
 		"`+contid+`",
-		"`+string(b)+`"
+		"`+strings.Replace(string(b),"\"","\\\"",-1) +`"
              ]
          },
          "secureContext":"admin"
@@ -358,6 +358,14 @@ func  register(user string ,id string )(string){
 
 
 func createContract( cont Contract)(string){
+	 cont.Acct.Fnds[0].FundId="A"
+	 cont.Acct.Fnds[0].Units=20
+	 cont.Acct.Fnds[1].FundId="B"
+	 cont.Acct.Fnds[1].Units=20
+	 cont.Acct.Fnds[2].FundId="C"
+	 cont.Acct.Fnds[2].Units=20
+	 cont.Acct.Fnds[3].FundId="D"
+	 cont.Acct.Fnds[3].Units=20
 
   args:="\""+ cont.Lf.Gender+"\"," +
 	"\""+ cont.Lf.Dob +"\"," +

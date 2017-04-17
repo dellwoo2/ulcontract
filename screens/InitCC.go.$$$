@@ -143,10 +143,8 @@ func pingScheduler( timerccid string )(string){
 
 func Initialise()(string){
   var timerccid string
-  var odsmanager string
-  var glmanager string
+  var manager string
   var commsmanager string
-  var fundmanager string
   var ccid string
   var policyregister string
  jstr:=`{
@@ -155,7 +153,7 @@ func Initialise()(string){
      "params": {
          "type": 1,
          "chaincodeID": {
-             "path": "https://github.com/dellwoo2/ulcontract/fund"
+             "path": "https://github.com/dellwoo2/ulcontract/manager"
          },
          "ctorMsg": {
              "function": "init",
@@ -171,10 +169,8 @@ func Initialise()(string){
     //*******************************
     // get the CCID for comms
     i:= strings.LastIndex( string(rsp) , "message\":\"" )
-    fmt.Println("FUND CCID="+ string(rsp)[i+10:i+138])
+    fmt.Println("Combined GL ODS Fund Manager CCID="+ string(rsp)[i+10:i+138])
     fundmanager=rsp[i+10:i+138]
-
-
 
 //*********************************
   jstr=`{
@@ -234,56 +230,6 @@ func Initialise()(string){
      "params": {
          "type": 1,
          "chaincodeID": {
-             "path": "https://github.com/dellwoo2/ulcontract/Ods"
-         },
-         "ctorMsg": {
-             "function": "init",
-             "args": [
-             ]
-         },
-         "secureContext": "admin"
-     },
-     "id": 1
-  }
- `
-  rsp=Invoke( jstr)
-  //*******************************
-    // get the CCID for ODS
-    i= strings.LastIndex( string(rsp) , "message\":\"" )
-    fmt.Println("ODS CCID="+ string(rsp)[i+10:i+138])
-    odsmanager=rsp[i+10:i+138]
-
- jstr=`{
-     "jsonrpc": "2.0",
-     "method": "deploy",
-     "params": {
-         "type": 1,
-         "chaincodeID": {
-             "path": "https://github.com/dellwoo2/ulcontract/Gl"
-         },
-         "ctorMsg": {
-             "function": "init",
-             "args": [
-             ]
-         },
-         "secureContext": "admin"
-     },
-     "id": 1
-  }
- `
-rsp=Invoke( jstr)
-//*******************************
-// get the CCID for GL Manager
-    i= strings.LastIndex( string(rsp) , "message\":\"" )
-    fmt.Println("GL CCID="+ string(rsp)[i+10:i+138])
-    glmanager=rsp[i+10:i+138]
-
- jstr=`{
-     "jsonrpc": "2.0",
-     "method": "deploy",
-     "params": {
-         "type": 1,
-         "chaincodeID": {
              "path": "https://github.com/dellwoo2/ulcontract/timer"
          },
          "ctorMsg": {
@@ -319,11 +265,9 @@ rsp=Invoke( jstr)
          "ctorMsg": {
              "function": "init",
              "args": [
-		"`+glmanager +`",
- 		"`+ odsmanager +`", 
+		"`+manager +`",
 		"`+ commsmanager +`",
  		"`+ timerccid +`", 
- 		"`+ fundmanager +`", 
 		"`+ url +`"
              ]
          },

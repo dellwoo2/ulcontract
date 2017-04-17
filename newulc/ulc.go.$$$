@@ -139,7 +139,7 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 //	err = 	stub.PutState("odsmanager",[]byte(odsmanager) )
 	err = 	stub.PutState("commsmanager",[]byte(commsmanager) )
 //	err = 	stub.PutState("fundmanager",[]byte(fundmanager) )
-	err = 	stub.PutState("manager",[]byte(fundmanager) )
+	err = 	stub.PutState("manager",[]byte(manager) )
         //fmt.Println( xx.A )
 	if err != nil {
 		return nil, err
@@ -291,8 +291,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	err = 	stub.PutState(policy.Cont.ContID, b)
 
 	//**********************************
-	//* Save Ploicies map with new policy status
+	//* Save Policies map with new policy status
+        policies=make(map[string]string )
+	valAsbytes, _ = stub.GetState("policies")
+    	json.Unmarshal(valAsbytes , &policies)
+	
         policies[policy.Cont.ContID]=policy.Cont.Status
+
         b, err = json.Marshal(policies)
 	err = 	stub.PutState("policies", b)
 
@@ -455,29 +460,39 @@ func (t *SimpleChaincode) fundAllocation(stub shim.ChaincodeStubInterface, args 
 		policy.Cont.Acct.Fnds[k]=v	
 	}
         b, err := json.Marshal(mv)
-	postFundUpdate(policy, b )
+	postFundUpdate(stub, policy, b )
 	return  policy, err
 }
 
-func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
+func 	postFundUpdate(stub shim.ChaincodeStubInterface, policy Policy , mv  []byte )( Policy, error ) {
+	_ , errx := stub.GetState("FM"+ invokeTran)
+	if errx == nil {
+		fmt.Println("Fund Manager update already done")
+	}
+	stub.PutState("FM"+ invokeTran , []byte("Y") )
+
+
+	s:=strings.Replace(string(mv), "\"", "\\\"", -1)
 	 var jsonStr = []byte( `{
    	  "jsonrpc": "2.0",
     	 "method": "invoke",
     	 "params": {
       	   "type": 1,
      	    "chaincodeID": {
-      	       "name":"`+fundmanager+`"
+      	       "name":"`+manager+`"
          },
          "ctorMsg": {
              "function": "updateFunds",
              "args": [
-                 "`+ string(mv)+`" 
+		 "`+policy.Cont.ContID+`",
+                 "`+ s+`" 
              ]
          },
          "secureContext": "admin"
      },
      "id": 3
     }` )
+    fmt.Println(string(jsonStr))
     req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
     req.Header.Set("X-Custom-Header", "myvalue")
     req.Header.Set("Content-Type", "application/json")
@@ -498,20 +513,18 @@ func 	postFundUpdate(policy Policy , mv  []byte )( Policy, error ) {
 }
 
 func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
-	//var contract Contract=policy.Cont
+
 	// payment is arg[1]
 	premium, _ := strconv.ParseFloat( args[1] , 10);
 
- 	fmt.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
-	//valAsbytes, err := stub.GetState("Contract")
-    	//json.Unmarshal(valAsbytes , &contract)
+ 	log.Print("DE***** Contract value="+policy.Cont.Acct.Valuation + "Payment="+args[1])
+
 
 	i, _ := strconv.ParseFloat( policy.Cont.Acct.Valuation , 10);
 	i = i + float64(premium)
         policy.Cont.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
- 	log.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
-       // b, err := json.Marshal(contract)
-	//err = 	stub.PutState("Contract", b)
+ 	log.Print("DE***** Contract value now="+policy.Cont.Acct.Valuation)
+
 	//*************************
 	// GL Posting
 	var glt GLtran
@@ -524,21 +537,28 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 
 	//*************************************
 	//* Now set the policy in force 
-	if  policy.Cont.UWstatus=="Ready"{
-  		policy.Cont.Status="InForce"
-//		t.activate(stub, args)	
 
+	if 	policy.Cont.Status=="IF" {
+		//*****************************************************
+		// email
+		subject:="Thank you for your Payment"
+		body:=`Dear Mr `+ policy.Cont.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your policy `+policy.Cont.ContID+` #N Many thanks`
+ 		t.mailto(stub, subject , body, policy )
+	} else{
+
+	  if  policy.Cont.UWstatus=="Ready"{
+  		policy.Cont.Status="InForce"
 		subject:="Your Policy is now in Force"
 		body:=`Dear Mr `+policy.Cont.Lf.Name+ ` #N Thank you for your payment of $`+strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your new policy #N we are pleased to inform you that your policy is now in force #N Many thanks`
 		t.mailto(stub, subject , body , policy )
-	}else
-	{
+	  }else{
 		//*****************************************************
 		// email
 		subject:="Thank you for your Payment"
 		body:=`Dear Mr `+ policy.Cont.Lf.Name + `#N Thank you for your payment of $` +strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your policy #N Many thanks`
  		t.mailto(stub, subject , body, policy )
-	}
+	  }
+       }
 	policy.Cont.Status="IF"
  	//t.activate(stub, args )
 	return  policy, nil
@@ -559,10 +579,13 @@ func glPost( stub shim.ChaincodeStubInterface, glt GLtran, pid string)( error){
 	return   err
 }
 func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error) {
-	valAsbytes, err := stub.GetState("glmanager")
-	glmanager=string(valAsbytes)
-
-
+	valAsbytes, err := stub.GetState("manager")
+	manager=string(valAsbytes)
+	_ ,errx := stub.GetState("GL"+ invokeTran) 
+        if errx == nil {
+		fmt.Println("GL Posting already done")
+	}
+	stub.PutState("GL"+ invokeTran , []byte("Y") )
 	valAsbytes, err = stub.GetState("url")
 	url=string(valAsbytes)
         b, err := json.Marshal(glt)
@@ -574,7 +597,7 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
     	 "params": {
       	   "type": 1,
      	    "chaincodeID": {
-      	       "name":"`+glmanager+`"
+      	       "name":"`+manager+`"
          },
          "ctorMsg": {
              "function": "updateT",
@@ -606,8 +629,15 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
     return err
 }
 func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) {
-	valAsbytes, err := stub.GetState("odsmanager")
-	odsmanager=string(valAsbytes)
+	 _ , errx := stub.GetState("ODS"+ invokeTran) 
+	if errx == nil {
+		fmt.Println("ODS Posting already done")
+	}
+	stub.PutState("ODS"+ invokeTran , []byte("Y") )
+
+
+	valAsbytes, err := stub.GetState("manager")
+	manager=string(valAsbytes)
 	valAsbytes, err = stub.GetState("url")
 	url=string(valAsbytes)
         b, err := json.Marshal(ods)
@@ -618,7 +648,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
     	 "params": {
       	   "type": 1,
      	    "chaincodeID": {
-      	       "name":"`+odsmanager+`"
+      	       "name":"`+manager+`"
          },
          "ctorMsg": {
              "function": "updateOds",
@@ -693,15 +723,11 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
         fmc:=10
 	adc:=12
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
-	valAsbytes, err := stub.GetState("Contract")
-    	json.Unmarshal(valAsbytes , &contract)
 
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
 	i = i - float64(coi+fmc+adc)
         contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
-        b, err := json.Marshal(contract)
-	err = 	stub.PutState("Contract", b)
 	//*************************
 	// GL Posting COI
 	var glt GLtran
@@ -728,7 +754,7 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
  	glt.Cr=strconv.FormatFloat(-float64(adc),  'f' , 2,  64)
 	glPost(stub, glt , "ADC" )
 	policy.Cont=contract
-	return policy, err
+	return policy, nil
 
 }
 
@@ -841,6 +867,8 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		return t.valuation(stub, args, policy)
 	} else if function == "transactions" {
 		return t.transactions(stub, args, policy)
+	} else if function == "dump" {
+		return t.dump(stub, args, policy)
 	}
 	fmt.Println("query did not find func: " + function)
 
@@ -850,21 +878,16 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 
 func (t *SimpleChaincode) transactions(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
 	var valAsbytes []byte
-	err:=json.Unmarshal(valAsbytes , &policy)
-	fmt.Println(err)
+    	valAsbytes, err :=json.Marshal( policy.Hist )
+	fmt.Println( "TRANSACTION HISTORY="+ string(valAsbytes))
+	fmt.Println( err)
   return valAsbytes, err
 }
 
 
 // read - query function to read key/value pair
-func (t *SimpleChaincode) read(stub shim.ChaincodeStubInterface, args []string , policy Policy ) ([]byte, error) {
-	var key , jsonResp string
-	var err error
-	if err != nil {
-		jsonResp = "{\"Error\":\"Failed to get state for " + key + "\"}"
-		return nil, errors.New(jsonResp)
-	}
-    	valAsbytes, err :=json.Marshal( policy );
-
-	return valAsbytes, nil
+func (t *SimpleChaincode) dump(stub shim.ChaincodeStubInterface, args []string , policy Policy ) ([]byte, error) {
+    	valAsbytes, err :=json.Marshal( policy)
+	fmt.Println( "POLICY DUMP="+ string(valAsbytes))
+	return valAsbytes, err
 }
