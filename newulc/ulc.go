@@ -19,6 +19,7 @@ package main
 
 import (
 	"os"
+	"time"
 	"io/ioutil"
 	"encoding/json"
 	"errors"
@@ -89,6 +90,7 @@ type History struct{
  Cont Contract
  Args []string
  Tranid string 
+ Dte string;
 }
 type Ods struct{
  Cont Contract
@@ -193,6 +195,8 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 
        //**************************************************
        // save the history
+	year, month, day := time.Now().Date()
+	dte:=strconv.Itoa(day)+"-"+month.String()+"-"+strconv.Itoa(year)
 	policy.Hist=make(map[string]History)
 	var h History
 	h.Methd="deploy"
@@ -200,6 +204,7 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 	h.Tranid=stub.GetTxID()  //time.Now().String()
 	h.Cont=policy.Cont
 	h.Args=args
+        h.Dte=dte
 	policy.Hist[h.Tranid]=h
 
 	//************************************************
@@ -250,13 +255,15 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// get Contract state 
 	valAsbytes, _ := stub.GetState(args[0])
     	json.Unmarshal(valAsbytes , &policy)
-
+	year, month, day := time.Now().Date()
+	dte:=strconv.Itoa(day)+"-"+month.String()+"-"+strconv.Itoa(year)
 	var h History
 	h.Methd="invoke"
 	h.Funct=function
 	h.Tranid=invokeTran
 	h.Cont=policy.Cont
 	h.Args=args
+        h.Dte=dte
 	policy.Hist[h.Tranid]=h
 
         var err error
