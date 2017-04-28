@@ -748,6 +748,8 @@ type Calc struct{
 func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 	var contract Contract=policy.Cont
         fmt.Println("Scheduled Processing for contract" + policy.Cont.ContID)
+
+
 	//***************************************
 	// Cal Calc Engine for Charges
         var x Calc
@@ -776,6 +778,22 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 	fmc, _ :=strconv.ParseFloat(resx.FMC,10)
         adc, _:=strconv.ParseFloat(resx.AMC,10)
         fmt.Println( "COI="+ resx.COI +" FMC=" + resx.FMC +" AMC="+ resx.AMC )
+	//****************************
+	// Write history record first
+        charges:=[]string{resx.COI,resx.FMC, resx.AMC}
+	var h History
+	h.Methd="Scheduled Processing"
+	h.Funct="Deduct Charges"
+	h.Tranid=invokeTran
+	h.Cont=policy.Cont
+	h.Args=charges
+        h.Dte=dte
+	policy.Hist[h.Tranid]=h
+        //*****************************
+        // save policy sate 
+        b1, _ := json.Marshal(policy)
+	stub.PutState(policy.Cont.ContID, b1)
+
 	//*******************************************
 	//* Do the valuation
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
