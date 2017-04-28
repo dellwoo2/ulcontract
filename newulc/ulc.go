@@ -719,12 +719,50 @@ func (t *SimpleChaincode) ProcessPolicy(stub shim.ChaincodeStubInterface, args [
 		  t.statement(stub , args , policy ) 
 	return policy, err	
 }
+
+
+type Res struct{
+  COI string
+  FMC string
+  AMC string
+}
+type Calc struct{
+  Service string
+  Age string
+  Smoker string
+  Gender string
+  Suminsured string
+}
+
+
 func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 	var contract Contract=policy.Cont
         fmt.Println("Scheduled Processing for contract" + policy.Cont.ContID)
-	coi:=33
-        fmc:=10
-	adc:=12
+	//***************************************
+	// Cal Calc Engine for Charges
+        var x Calc
+        x.Age="33"
+        x.Gender="M"
+        x.Smoker="N"
+        x.Suminsured="67888"
+        x.Service="DemoCharges"
+        b := new(bytes.Buffer)
+        json.NewEncoder(b).Encode(x)
+        fmt.Println(b) 
+        res, errx := http.Post("http://175.141.142.92:8080/test", "application/json; charset=utf-8",  b )
+        fmt.Println(errx)
+        body, _ := ioutil.ReadAll(res.Body)
+        var resx Res;
+        json.Unmarshal(body , &resx)
+	//coi:=33
+        //fmc:=10
+	//adc:=12
+        coi, _ :=strconv.ParseFloat(resx.COI,10)
+	fmc, _ :=strconv.ParseFloat(resx.FMC,10)
+        adc, _:=strconv.ParseFloat(resx.AMC,10)
+        fmt.Println( "COI="+ resx.COI +" FMC=" + resx.FMC +" AMC="+ resx.AMC )
+	//*******************************************
+	//* Do the valuation
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
 
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
