@@ -195,8 +195,9 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 
        //**************************************************
        // save the history
-	year, month, day := time.Now().Date()
-	dte:=strconv.Itoa(day)+"-"+month.String()+"-"+strconv.Itoa(year)
+	year, _ , day := time.Now().Date()
+        month:=time.Now().Month();
+	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)
 	policy.Hist=make(map[string]History)
 	var h History
 	h.Methd="deploy"
@@ -255,8 +256,9 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// get Contract state 
 	valAsbytes, _ := stub.GetState(args[0])
     	json.Unmarshal(valAsbytes , &policy)
-	year, month, day := time.Now().Date()
-	dte:=strconv.Itoa(day)+"-"+month.String()+"-"+strconv.Itoa(year)
+	year, _ , day := time.Now().Date()
+        month:=time.Now().Month();
+	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)
 	var h History
 	h.Methd="invoke"
 	h.Funct=function
@@ -735,7 +737,8 @@ type Res struct{
 }
 type Calc struct{
   Service string
-  Age string
+  DOB string
+  CalcDate string
   Smoker string
   Gender string
   Suminsured string
@@ -748,10 +751,15 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 	//***************************************
 	// Cal Calc Engine for Charges
         var x Calc
-        x.Age="33"
-        x.Gender="M"
-        x.Smoker="N"
-        x.Suminsured="67888"
+
+	year, _ , day := time.Now().Date()
+        month:=time.Now().Month();
+	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)
+	x.CalcDate=dte
+        x.DOB=contract.Lf.Dob
+        x.Gender=contract.Lf.Gender
+        x.Smoker=contract.Lf.Smoker
+        x.Suminsured=contract.SumAssured
         x.Service="DemoCharges"
         b := new(bytes.Buffer)
         json.NewEncoder(b).Encode(x)
