@@ -196,8 +196,11 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
        //**************************************************
        // save the history
 	year, _ , day := time.Now().Date()
-        month:=time.Now().Month();
-	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)
+        month:=time.Now().Month()
+        hour:=time.Now().Hour()
+        min:=time.Now().Minute()
+        sec:=time.Now().Second()
+	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
 	policy.Hist=make(map[string]History)
 	var h History
 	h.Methd="deploy"
@@ -206,7 +209,7 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 	h.Cont=policy.Cont
 	h.Args=args
         h.Dte=dte
-	policy.Hist[h.Tranid]=h
+	policy.Hist[dte]=h
 
 	//************************************************
 	//* Funds 
@@ -257,8 +260,12 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	valAsbytes, _ := stub.GetState(args[0])
     	json.Unmarshal(valAsbytes , &policy)
 	year, _ , day := time.Now().Date()
-        month:=time.Now().Month();
-	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)
+        month:=time.Now().Month()
+        hour:=time.Now().Hour()
+        min:=time.Now().Minute()
+        sec:=time.Now().Second()
+	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
+	
 	var h History
 	h.Methd="invoke"
 	h.Funct=function
@@ -266,7 +273,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	h.Cont=policy.Cont
 	h.Args=args
         h.Dte=dte
-	policy.Hist[h.Tranid]=h
+	policy.Hist[dte]=h
 
         var err error
 
@@ -756,7 +763,11 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 
 	year, _ , day := time.Now().Date()
         month:=time.Now().Month();
+        hour:=time.Now().Hour();
+        min:=time.Now().Minute();
+        sec:=time.Now().Second()
 	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)
+	dtex:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
 	x.CalcDate=dte
         x.DOB=contract.Lf.Dob
         x.Gender=contract.Lf.Gender
@@ -787,8 +798,8 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 	h.Tranid=invokeTran
 	h.Cont=policy.Cont
 	h.Args=charges
-        h.Dte=dte
-	policy.Hist[h.Tranid]=h
+        h.Dte=dtex
+	policy.Hist[dtex]=h
         //*****************************
         // save policy sate 
         b1, _ := json.Marshal(policy)
