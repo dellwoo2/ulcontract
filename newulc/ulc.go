@@ -416,13 +416,20 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
 	surr, _ := strconv.ParseFloat( args[1] , 10);
 	surrchg:=20
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
-	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
-	i = i - float64(surr)
+	i, err := strconv.ParseFloat( contract.Acct.Valuation , 10);
 	i = i - float64(surrchg)
+	if i > float64(surr) {
+		i = i - float64(surr)
+        }else{
+         surr=i
+         i=0
+        }
         contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
-        b, err := json.Marshal(contract)
-	err = 	stub.PutState("Contract", b)
+        
+        if i==0 {
+		contract.Status="SR"
+        }
 	//********************************************
 	//gl posting 
 	//*************************
@@ -442,12 +449,22 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
  	glt.Cracc="MGCHG"
  	glt.Cr=strconv.FormatFloat(-float64(surrchg),  'f' , 2,  64)
 	glPost(stub, glt , "SCG")
-
+    
 	//*****************************************************
 	// email
-	subject:="Your Policy has been Surrendered"
-	body:=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to surrender your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account
-	Many thanks`
+        var subject string
+        var body string
+	if i == 0 {
+	  subject="Your Policy has been Surrendered"
+	  body=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to surrender your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account
+	  Many thanks`
+        }else{
+	  subject="Partial Surrender of your policy"
+	  body=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to partial surrender of your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account
+	  	The value remaining in your policy is `+ contract.Acct.Valuation + ` 
+		Many thanks`
+
+        }
  	t.mailto(stub, subject , body, policy)
 	policy.Cont=contract
 	return policy , err
@@ -564,7 +581,7 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 	} else{
 
 	  if  policy.Cont.UWstatus=="Ready"{
-  		policy.Cont.Status="InForce"
+  		policy.Cont.Status="IF"
 		subject:="Your Policy is now in Force"
 		body:=`Dear Mr `+policy.Cont.Lf.Name+ ` #N Thank you for your payment of $`+strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your new policy #N we are pleased to inform you that your policy is now in force #N Many thanks`
 		t.mailto(stub, subject , body , policy )
@@ -732,7 +749,11 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 func (t *SimpleChaincode) ProcessPolicy(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 		  var err error
 		  policy , err = t.ProcessCharges(stub, args , policy)
-		  t.statement(stub , args , policy ) 
+		  if policy.Cont.Status == "LS"{
+                     t.lapseNotification(stub , args , policy )		
+		  }else{
+		    t.statement(stub , args , policy )
+                  } 
 	return policy, err	
 }
 
@@ -813,6 +834,11 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 	i = i - float64(coi+fmc+adc)
         contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
+        //********************************************************
+        //* Check lapsing rules
+        if i < ( coi+fmc+adc ) {
+         contract.Status="LS"
+	}
 	//*************************
 	// GL Posting COI
 	var glt GLtran
@@ -850,6 +876,17 @@ func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []str
 	//body:= `Your Statement of account: #N Account Holder:`+contract.Owner+`#NPolicy No: `+contract.ContID +` #N Value:`+contract.Acct.Valuation+` #N Yours Sincerely, Danny`
 	subject:="Your monthly statement"
 	body:=`Dear Mr `+ contract.Lf.Name + `#N Policy Number=`+policy.Cont.ContID+`#N Value of Policy=`+contract.Acct.Valuation+` #N `
+	t.mailto(stub, subject , body, policy )
+ return nil,nil
+}
+
+func (t *SimpleChaincode) lapseNotification(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
+	var contract Contract=policy.Cont
+	//subject:="Your Policy Has Lapsed"
+	//body:= `: #N Account Holder:`+contract.Owner+`#NPolicy No: `+contract.ContID +` #N Value:`+contract.Acct.Valuation+` #N Yours Sincerely, Danny`
+	subject:="Your monthly statement"
+	body:=`Dear Mr `+ contract.Lf.Name + `#N Policy Number=`+policy.Cont.ContID+`#N The remaining value of your policy is below the minimum to support it#N
+	Value of Policy=`+contract.Acct.Valuation+` #N The policy has now lapsed. If payment is made within one month the policy will be reinstated. If no payment is made the remaining value will be paid out`
 	t.mailto(stub, subject , body, policy )
  return nil,nil
 }
