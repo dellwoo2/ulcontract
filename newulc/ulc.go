@@ -115,6 +115,7 @@ var invokeTran string
 var url string
 var manager string
 var commsmanager string
+var RFC3339    string = "2006-01-02T15:04:05Z07:00"
 func main() {
 
 	err := shim.Start(new(SimpleChaincode))
@@ -195,12 +196,13 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 
        //**************************************************
        // save the history
-	year, _ , day := time.Now().Date()
-        month:=time.Now().Month()
-        hour:=time.Now().Hour()
-        min:=time.Now().Minute()
-        sec:=time.Now().Second()
-	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
+	//year, _ , day := time.Now().Date()
+        //month:=time.Now().Month()
+        //hour:=time.Now().Hour()
+        //min:=time.Now().Minute()
+        //sec:=time.Now().Second()
+	//dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
+        dte:=  time.Now().Format(RFC3339)
 	policy.Hist=make(map[string]History)
 	var h History
 	h.Methd="deploy"
@@ -259,13 +261,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// get Contract state 
 	valAsbytes, _ := stub.GetState(args[0])
     	json.Unmarshal(valAsbytes , &policy)
-	year, _ , day := time.Now().Date()
-        month:=time.Now().Month()
-        hour:=time.Now().Hour()
-        min:=time.Now().Minute()
-        sec:=time.Now().Second()
-	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
-	
+	//year, _ , day := time.Now().Date()
+        //month:=time.Now().Month()
+        //hour:=time.Now().Hour()
+        //min:=time.Now().Minute()
+        //sec:=time.Now().Second()
+//	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
+        dte:=  time.Now().Format(RFC3339)
 	var h History
 	h.Methd="invoke"
 	h.Funct=function
@@ -784,11 +786,12 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 
 	year, _ , day := time.Now().Date()
         month:=time.Now().Month();
-        hour:=time.Now().Hour();
-        min:=time.Now().Minute();
-        sec:=time.Now().Second()
+        //hour:=time.Now().Hour();
+        //min:=time.Now().Minute();
+        //sec:=time.Now().Second()
 	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)
-	dtex:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
+	//dtex:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
+        dtex:=  time.Now().Format(RFC3339)
 	x.CalcDate=dte
         x.DOB=contract.Lf.Dob
         x.Gender=contract.Lf.Gender
