@@ -910,8 +910,9 @@ func (t *SimpleChaincode) lapseNotification(stub shim.ChaincodeStubInterface, ar
 	//subject:="Your Policy Has Lapsed"
 	//body:= `: #N Account Holder:`+contract.Owner+`#NPolicy No: `+contract.ContID +` #N Value:`+contract.Acct.Valuation+` #N Yours Sincerely, Danny`
 	subject:="Your monthly statement"
-	body:=`Dear Mr `+ contract.Lf.Name + `#N Policy Number=`+policy.Cont.ContID+`#N The remaining value of your policy is below the minimum to support it#N
-	Value of Policy=`+contract.Acct.Valuation+` #N The policy has now lapsed. If payment is made within one month the policy will be reinstated. If no payment is made the remaining value will be paid out`
+	body:=`Dear Mr `+ contract.Lf.Name + `#N Policy Number=`+policy.Cont.ContID+`#N The remaining value of your policy is below the minimum to support it#N`+
+        `Value of Policy=`+contract.Acct.Valuation+` #N The policy has now lapsed. If payment is made within one month the policy will be reinstated.`+
+	`#N If no payment is made the remaining value will be paid out within 14 days`
 	t.mailto(stub, subject , body, policy )
  return nil,nil
 }
