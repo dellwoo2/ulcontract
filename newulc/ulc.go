@@ -225,6 +225,7 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 	h.Tranid=stub.GetTxID()  //time.Now().String()
 	h.Cont=policy.Cont
 	h.Args=args
+	h.Args[0]="0"
         h.Dte=dte
 	policy.Hist[dte]=h
 
@@ -293,10 +294,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// Handle different functions
 
 	 if function == "fundAllocation" {
+                h.Args[0]="0"
 		policy , err = t.fundAllocation(stub, args, policy)
 	} else if function == "applyPremium" {
+                h.Args[0]=args[1]
 		policy,err = t.applyPremium(stub, args, policy)
 	} else if function == "surrender" {
+		h.Args[0]=args[1]
 		policy,err = t.surrender(stub, args , policy )
 	}else{ 
 		fmt.Println("invoke did not find func: " + function)
@@ -470,10 +474,10 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
         var body string
 	if i == 0 {
 	  subject="Your Policy has been Surrendered"
-	  body=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to surrender your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account #N Many thanks`
+	  body=`Dear Mr `+ contract.Lf.Name+ `#N         Your request to surrender your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account #N Many thanks`
         }else{
 	  subject="Partial Surrender of your policy"
-	  body=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to partial surrender of your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account #N 	The value remaining in your policy is `+ contract.Acct.Valuation + ` #N Many thanks`
+	  body=`Dear Mr `+ contract.Lf.Name+ `#N         Your request to partial surrender of your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account #N       The value remaining in your policy is `+ contract.Acct.Valuation + ` #N Many thanks`
 
         }
  	t.mailto(stub, subject , body, policy)
