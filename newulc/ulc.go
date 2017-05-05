@@ -819,6 +819,7 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 	coi:=33.00
         fmc:=10.00
 	adc:=12.00
+        totalcharges:=55.00
         if errx == nil {
           body, _ := ioutil.ReadAll(res.Body)
 
@@ -826,6 +827,7 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
          coi, _ =strconv.ParseFloat(resx.COI,10)
 	 fmc, _ =strconv.ParseFloat(resx.FMC,10)
          adc, _ =strconv.ParseFloat(resx.AMC,10)
+         totalcharges=coi+fmc+adc
          fmt.Println( "COI="+ resx.COI +" FMC=" + resx.FMC +" AMC="+ resx.AMC )
        } else{
           fmt.Println(errx)
@@ -844,6 +846,7 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 	h.Tranid=invokeTran
 	h.Cont=policy.Cont
 	h.Args=charges
+        h.Args[0]= strconv.FormatFloat( totalcharges ,  'f' , 2,  64)
         h.Dte=dtex
 	policy.Hist[dtex]=h
         //*****************************
