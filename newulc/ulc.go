@@ -472,13 +472,10 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
         var body string
 	if i == 0 {
 	  subject="Your Policy has been Surrendered"
-	  body=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to surrender your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account
-	  Many thanks`
+	  body=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to surrender your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account #N Many thanks`
         }else{
 	  subject="Partial Surrender of your policy"
-	  body=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to partial surrender of your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account
-	  	The value remaining in your policy is `+ contract.Acct.Valuation + ` 
-		Many thanks`
+	  body=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to partial surrender of your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account #N 	The value remaining in your policy is `+ contract.Acct.Valuation + ` #N Many thanks`
 
         }
  	t.mailto(stub, subject , body, policy)
