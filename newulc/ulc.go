@@ -91,6 +91,7 @@ type History struct{
  Args []string
  Tranid string 
  Dte string;
+ EndValue string
 }
 type Ods struct{
  Cont Contract
@@ -275,12 +276,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// get Contract state 
 	valAsbytes, _ := stub.GetState(args[0])
     	json.Unmarshal(valAsbytes , &policy)
-	//year, _ , day := time.Now().Date()
-        //month:=time.Now().Month()
-        //hour:=time.Now().Hour()
-        //min:=time.Now().Minute()
-        //sec:=time.Now().Second()
-//	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
+
         dte:=  t.TransactionTime(stub, stub.GetTxID() )
 	var h History
 	h.Methd="invoke"
@@ -289,7 +285,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	h.Cont=policy.Cont
 	h.Args=args
         h.Dte=dte
-	policy.Hist[dte]=h
+
 
         var err error
 
@@ -309,6 +305,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	if  policy.Cont.ContID=="" {
 		return nil,nil
         }
+	h.EndValue=policy.Cont.Acct.Valuation
+	policy.Hist[dte]=h
 	//*************************
 	//* if we are here then we need to update the ODS
 	var ods Ods
@@ -318,7 +316,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	Odsupdate(stub , ods , invokeTran ) 
 
         //*****************************
-        // save policy sate 
+        // save policy state 
         b, err := json.Marshal(policy)
 	err = 	stub.PutState(policy.Cont.ContID, b)
 
