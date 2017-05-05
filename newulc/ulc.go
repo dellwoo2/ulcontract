@@ -150,6 +150,20 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	return nil, err
 }
 
+
+//****************************************
+//* get the transaction time
+func (t *SimpleChaincode) TransactionTime( stub shim.ChaincodeStubInterface , tranid string)( string){
+	txtime, _ := stub.GetState("TIME_"+tranid)
+	if txtime == nil { 
+	  txtime=[]byte(time.Now().Format(RFC3339))
+	}
+        stub.PutState( "TIME_"+tranid ,txtime )
+   return ( string( txtime) ) 
+
+}
+
+
 //***********************************************
 //* Create a newpolicy
 func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []string) ([]byte, error) {
@@ -202,7 +216,7 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
         //min:=time.Now().Minute()
         //sec:=time.Now().Second()
 	//dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
-        dte:=  time.Now().Format(RFC3339)
+        dte:=  t.TransactionTime( stub, stub.GetTxID() )
 	policy.Hist=make(map[string]History)
 	var h History
 	h.Methd="deploy"
@@ -267,7 +281,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
         //min:=time.Now().Minute()
         //sec:=time.Now().Second()
 //	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
-        dte:=  time.Now().Format(RFC3339)
+        dte:=  t.TransactionTime(stub, stub.GetTxID() )
 	var h History
 	h.Methd="invoke"
 	h.Funct=function
@@ -791,7 +805,7 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
         //sec:=time.Now().Second()
 	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)
 	//dtex:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
-        dtex:=  time.Now().Format(RFC3339)
+        dtex:=  t.TransactionTime( stub, stub.GetTxID() )
 	x.CalcDate=dte
         x.DOB=contract.Lf.Dob
         x.Gender=contract.Lf.Gender
@@ -801,18 +815,27 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
         b := new(bytes.Buffer)
         json.NewEncoder(b).Encode(x)
         fmt.Println(b) 
-        res, errx := http.Post("http://175.141.142.92:8080/test", "application/json; charset=utf-8",  b )
-        fmt.Println(errx)
-        body, _ := ioutil.ReadAll(res.Body)
+        res, errx := http.Post("http://203.106.175.109:8080/test", "application/json; charset=utf-8",  b )
         var resx Res;
-        json.Unmarshal(body , &resx)
-	//coi:=33
-        //fmc:=10
-	//adc:=12
-        coi, _ :=strconv.ParseFloat(resx.COI,10)
-	fmc, _ :=strconv.ParseFloat(resx.FMC,10)
-        adc, _:=strconv.ParseFloat(resx.AMC,10)
-        fmt.Println( "COI="+ resx.COI +" FMC=" + resx.FMC +" AMC="+ resx.AMC )
+	coi:=33.00
+        fmc:=10.00
+	adc:=12.00
+        if errx == nil {
+          body, _ := ioutil.ReadAll(res.Body)
+
+          json.Unmarshal(body , &resx)
+         coi, _ =strconv.ParseFloat(resx.COI,10)
+	 fmc, _ =strconv.ParseFloat(resx.FMC,10)
+         adc, _ =strconv.ParseFloat(resx.AMC,10)
+         fmt.Println( "COI="+ resx.COI +" FMC=" + resx.FMC +" AMC="+ resx.AMC )
+       } else{
+          fmt.Println(errx)
+	  resx.COI="33"
+	  resx.FMC="10"
+	  resx.AMC="12"
+        }
+
+
 	//****************************
 	// Write history record first
         charges:=[]string{resx.COI,resx.FMC, resx.AMC}
