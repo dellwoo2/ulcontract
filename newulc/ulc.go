@@ -814,13 +814,13 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
         b := new(bytes.Buffer)
         json.NewEncoder(b).Encode(x)
         fmt.Println(b) 
-        res, errx := http.Post("http://203.106.175.109:8080/test", "application/json; charset=utf-8",  b )
+        //res, errx := http.Post("http://203.106.175.109:8080/test", "application/json; charset=utf-8",  b )
         var resx Res;
 	coi:=33.00
         fmc:=10.00
 	adc:=12.00
         totalcharges:=55.00
-        if errx == nil {
+        /*if errx == nil {
           body, _ := ioutil.ReadAll(res.Body)
 
           json.Unmarshal(body , &resx)
@@ -829,12 +829,12 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
          adc, _ =strconv.ParseFloat(resx.AMC,10)
          totalcharges=coi+fmc+adc
          fmt.Println( "COI="+ resx.COI +" FMC=" + resx.FMC +" AMC="+ resx.AMC )
-       } else{
-          fmt.Println(errx)
+       } else{   ******************/
+          //fmt.Println(errx)
 	  resx.COI="33"
 	  resx.FMC="10"
 	  resx.AMC="12"
-        }
+       // }
 
 
 	//****************************
