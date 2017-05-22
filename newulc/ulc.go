@@ -754,6 +754,7 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 		  policy , err = t.ProcessPolicy(stub, args , policy)
 
 		  policies[policy.Cont.ContID]=policy.Cont.Status
+
         	  b, _ := json.Marshal(policy)
 		  err =	stub.PutState(key , b)
 	        }
@@ -848,7 +849,7 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 	h.Args=charges
         h.Args[0]= strconv.FormatFloat( totalcharges ,  'f' , 2,  64)
         h.Dte=dtex
-	policy.Hist[dtex]=h
+
         //*****************************
         // save policy sate 
         b1, _ := json.Marshal(policy)
@@ -860,8 +861,13 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 
 	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
 	i = i - float64(coi+fmc+adc)
+        if i< 0 {
+          i = 0 
+        }
         contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
+        h.EndValue=policy.Cont.Acct.Valuation
+	policy.Hist[dtex]=h
         //********************************************************
         //* Check lapsing rules
         if i < ( coi+fmc+adc ) {
