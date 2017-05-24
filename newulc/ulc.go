@@ -740,7 +740,7 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 	  vb, _ := stub.GetState("policies")
     	  json.Unmarshal(vb , &policies)
 
-   //Iterate over the contracts & process all that are in force
+        //Iterate over the contracts & process all that are in force
         for key , value := range policies {
         fmt.Println("Sheduler Looking at Policy" + key +" Status="+value)
 		if value == "IF" {
@@ -790,7 +790,7 @@ type Calc struct{
 
 
 func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
-	var contract Contract=policy.Cont
+	//var contract Contract=policy.Cont
         fmt.Println("Scheduled Processing for contract" + policy.Cont.ContID)
 
 
@@ -807,10 +807,10 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 	//dtex:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
         dtex:=  t.TransactionTime( stub, stub.GetTxID() )
 	x.CalcDate=dte
-        x.DOB=contract.Lf.Dob
-        x.Gender=contract.Lf.Gender
-        x.Smoker=contract.Lf.Smoker
-        x.Suminsured=contract.SumAssured
+        x.DOB=policy.Cont.Lf.Dob
+        x.Gender=policy.Cont.Lf.Gender
+        x.Smoker=policy.Cont.Lf.Smoker
+        x.Suminsured=policy.Cont.SumAssured
         x.Service="DemoCharges"
         b := new(bytes.Buffer)
         json.NewEncoder(b).Encode(x)
@@ -850,28 +850,30 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
         h.Args[0]= strconv.FormatFloat( totalcharges ,  'f' , 2,  64)
         h.Dte=dtex
 
-        //*****************************
-        // save policy sate 
-        b1, _ := json.Marshal(policy)
-	stub.PutState(policy.Cont.ContID, b1)
 
 	//*******************************************
 	//* Do the valuation
- 	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
+ 	fmt.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
 
-	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
+	i, _ := strconv.ParseFloat( policy.Cont.Acct.Valuation , 10);
 	i = i - float64(coi+fmc+adc)
         if i< 0 {
           i = 0 
         }
-        contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
- 	log.Print("DE***** Contract value="+contract.Acct.Valuation)
+        policy.Cont.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
+ 	log.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
         h.EndValue=policy.Cont.Acct.Valuation
 	policy.Hist[dtex]=h
+        //*****************************
+        // save policy sate 
+        //b1, _ := json.Marshal(policy)
+	//stub.PutState(policy.Cont.ContID, b1)
+
+
         //********************************************************
         //* Check lapsing rules
         if i < ( coi+fmc+adc ) {
-         contract.Status="LS"
+         policy.Cont.Status="LS"
 	}
 	//*************************
 	// GL Posting COI
@@ -898,7 +900,7 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
  	glt.Cracc="MGEXP"
  	glt.Cr=strconv.FormatFloat(-float64(adc),  'f' , 2,  64)
 	glPost(stub, glt , "ADC" )
-	policy.Cont=contract
+	//policy.Cont=contract
 	return policy, nil
 
 }
