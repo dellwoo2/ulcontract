@@ -19,6 +19,7 @@ package main
 
 import (
 	"os"
+	"time"
 	"io/ioutil"
 	"encoding/json"
 	"errors"
@@ -89,6 +90,8 @@ type History struct{
  Cont Contract
  Args []string
  Tranid string 
+ Dte string;
+ EndValue string
 }
 type Ods struct{
  Cont Contract
@@ -113,6 +116,7 @@ var invokeTran string
 var url string
 var manager string
 var commsmanager string
+var RFC3339    string = "2006-01-02T15:04:05Z07:00"
 func main() {
 
 	err := shim.Start(new(SimpleChaincode))
@@ -146,6 +150,20 @@ func (t *SimpleChaincode) Init(stub shim.ChaincodeStubInterface, function string
 	}
 	return nil, err
 }
+
+
+//****************************************
+//* get the transaction time
+func (t *SimpleChaincode) TransactionTime( stub shim.ChaincodeStubInterface , tranid string)( string){
+	txtime, _ := stub.GetState("TIME_"+tranid)
+	if txtime == nil { 
+	  txtime=[]byte(time.Now().Format(RFC3339))
+	}
+        stub.PutState( "TIME_"+tranid ,txtime )
+   return ( string( txtime) ) 
+
+}
+
 
 //***********************************************
 //* Create a newpolicy
@@ -193,6 +211,13 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 
        //**************************************************
        // save the history
+	//year, _ , day := time.Now().Date()
+        //month:=time.Now().Month()
+        //hour:=time.Now().Hour()
+        //min:=time.Now().Minute()
+        //sec:=time.Now().Second()
+	//dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
+        dte:=  t.TransactionTime( stub, stub.GetTxID() )
 	policy.Hist=make(map[string]History)
 	var h History
 	h.Methd="deploy"
@@ -200,7 +225,9 @@ func (t *SimpleChaincode) NewPolicy(stub shim.ChaincodeStubInterface,args []stri
 	h.Tranid=stub.GetTxID()  //time.Now().String()
 	h.Cont=policy.Cont
 	h.Args=args
-	policy.Hist[h.Tranid]=h
+	h.Args[0]="0"
+        h.Dte=dte
+	policy.Hist[dte]=h
 
 	//************************************************
 	//* Funds 
@@ -251,13 +278,15 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	valAsbytes, _ := stub.GetState(args[0])
     	json.Unmarshal(valAsbytes , &policy)
 
+        dte:=  t.TransactionTime(stub, stub.GetTxID() )
 	var h History
 	h.Methd="invoke"
 	h.Funct=function
 	h.Tranid=invokeTran
 	h.Cont=policy.Cont
 	h.Args=args
-	policy.Hist[h.Tranid]=h
+        h.Dte=dte
+
 
         var err error
 
@@ -265,10 +294,13 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	// Handle different functions
 
 	 if function == "fundAllocation" {
+                h.Args[0]="0"
 		policy , err = t.fundAllocation(stub, args, policy)
 	} else if function == "applyPremium" {
+                h.Args[0]=args[1]
 		policy,err = t.applyPremium(stub, args, policy)
 	} else if function == "surrender" {
+		h.Args[0]=args[1]
 		policy,err = t.surrender(stub, args , policy )
 	}else{ 
 		fmt.Println("invoke did not find func: " + function)
@@ -277,6 +309,8 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	if  policy.Cont.ContID=="" {
 		return nil,nil
         }
+	h.EndValue=policy.Cont.Acct.Valuation
+	policy.Hist[dte]=h
 	//*************************
 	//* if we are here then we need to update the ODS
 	var ods Ods
@@ -286,7 +320,7 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	Odsupdate(stub , ods , invokeTran ) 
 
         //*****************************
-        // save policy sate 
+        // save policy state 
         b, err := json.Marshal(policy)
 	err = 	stub.PutState(policy.Cont.ContID, b)
 
@@ -400,13 +434,20 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
 	surr, _ := strconv.ParseFloat( args[1] , 10);
 	surrchg:=20
  	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
-	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
-	i = i - float64(surr)
+	i, err := strconv.ParseFloat( contract.Acct.Valuation , 10);
 	i = i - float64(surrchg)
+	if i > float64(surr) {
+		i = i - float64(surr)
+        }else{
+         surr=i
+         i=0
+        }
         contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
  	log.Print("DE***** Contract value="+contract.Acct.Valuation)
-        b, err := json.Marshal(contract)
-	err = 	stub.PutState("Contract", b)
+        
+        if i==0 {
+		contract.Status="SR"
+        }
 	//********************************************
 	//gl posting 
 	//*************************
@@ -426,12 +467,19 @@ func (t *SimpleChaincode) surrender(stub shim.ChaincodeStubInterface, args []str
  	glt.Cracc="MGCHG"
  	glt.Cr=strconv.FormatFloat(-float64(surrchg),  'f' , 2,  64)
 	glPost(stub, glt , "SCG")
-
+    
 	//*****************************************************
 	// email
-	subject:="Your Policy has been Surrendered"
-	body:=`Dear Mr `+ contract.Lf.Name+ `#N	Your request to surrender your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account
-	Many thanks`
+        var subject string
+        var body string
+	if i == 0 {
+	  subject="Your Policy has been Surrendered"
+	  body=`Dear Mr `+ contract.Lf.Name+ `#N         Your request to surrender your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account #N Many thanks`
+        }else{
+	  subject="Partial Surrender of your policy"
+	  body=`Dear Mr `+ contract.Lf.Name+ `#N         Your request to partial surrender of your policy has been accepted #N and payment of $`+strconv.FormatFloat(surr,  'f' , 2,  64)+` has been made directly to your bank account #N       The value remaining in your policy is `+ contract.Acct.Valuation + ` #N Many thanks`
+
+        }
  	t.mailto(stub, subject , body, policy)
 	policy.Cont=contract
 	return policy , err
@@ -468,6 +516,7 @@ func 	postFundUpdate(stub shim.ChaincodeStubInterface, policy Policy , mv  []byt
 	_ , errx := stub.GetState("FM"+ invokeTran)
 	if errx == nil {
 		fmt.Println("Fund Manager update already done")
+		stub.PutState("FM"+ invokeTran , []byte("Y") )
 	}
 	stub.PutState("FM"+ invokeTran , []byte("Y") )
 
@@ -547,7 +596,7 @@ func (t *SimpleChaincode) applyPremium(stub shim.ChaincodeStubInterface, args []
 	} else{
 
 	  if  policy.Cont.UWstatus=="Ready"{
-  		policy.Cont.Status="InForce"
+  		policy.Cont.Status="IF"
 		subject:="Your Policy is now in Force"
 		body:=`Dear Mr `+policy.Cont.Lf.Name+ ` #N Thank you for your payment of $`+strconv.FormatFloat(premium,  'f' , 2,  64)+ ` for your new policy #N we are pleased to inform you that your policy is now in force #N Many thanks`
 		t.mailto(stub, subject , body , policy )
@@ -584,6 +633,7 @@ func Glupdate(stub shim.ChaincodeStubInterface, glt GLtran, pid string ) ( error
 	_ ,errx := stub.GetState("GL"+ invokeTran) 
         if errx == nil {
 		fmt.Println("GL Posting already done")
+		stub.PutState("GL"+ invokeTran , []byte("Y") )
 	}
 	stub.PutState("GL"+ invokeTran , []byte("Y") )
 	valAsbytes, err = stub.GetState("url")
@@ -632,6 +682,7 @@ func Odsupdate(stub shim.ChaincodeStubInterface, ods Ods, pid string ) ( error) 
 	 _ , errx := stub.GetState("ODS"+ invokeTran) 
 	if errx == nil {
 		fmt.Println("ODS Posting already done")
+		stub.PutState("ODS"+ invokeTran , []byte("Y") )
 	}
 	stub.PutState("ODS"+ invokeTran , []byte("Y") )
 
@@ -689,7 +740,7 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 	  vb, _ := stub.GetState("policies")
     	  json.Unmarshal(vb , &policies)
 
-   //Iterate over the contracts & process all that are in force
+        //Iterate over the contracts & process all that are in force
         for key , value := range policies {
         fmt.Println("Sheduler Looking at Policy" + key +" Status="+value)
 		if value == "IF" {
@@ -703,6 +754,7 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 		  policy , err = t.ProcessPolicy(stub, args , policy)
 
 		  policies[policy.Cont.ContID]=policy.Cont.Status
+
         	  b, _ := json.Marshal(policy)
 		  err =	stub.PutState(key , b)
 	        }
@@ -713,21 +765,116 @@ func (t *SimpleChaincode) monthlyProcessing(stub shim.ChaincodeStubInterface, ar
 func (t *SimpleChaincode) ProcessPolicy(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
 		  var err error
 		  policy , err = t.ProcessCharges(stub, args , policy)
-		  t.statement(stub , args , policy ) 
+		  if policy.Cont.Status == "LS"{
+                     t.lapseNotification(stub , args , policy )		
+		  }else{
+		    t.statement(stub , args , policy )
+                  } 
 	return policy, err	
 }
-func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
-	var contract Contract=policy.Cont
-        fmt.Println("Scheduled Processing for contract" + policy.Cont.ContID)
-	coi:=33
-        fmc:=10
-	adc:=12
- 	fmt.Print("DE***** Contract value="+contract.Acct.Valuation)
 
-	i, _ := strconv.ParseFloat( contract.Acct.Valuation , 10);
+
+type Res struct{
+  COI string
+  FMC string
+  AMC string
+}
+type Calc struct{
+  Service string
+  DOB string
+  CalcDate string
+  Smoker string
+  Gender string
+  Suminsured string
+}
+
+
+func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args []string, policy Policy) (Policy, error) {
+	//var contract Contract=policy.Cont
+        fmt.Println("Scheduled Processing for contract" + policy.Cont.ContID)
+
+
+	//***************************************
+	// Cal Calc Engine for Charges
+        var x Calc
+
+	year, _ , day := time.Now().Date()
+        month:=time.Now().Month();
+        //hour:=time.Now().Hour();
+        //min:=time.Now().Minute();
+        //sec:=time.Now().Second()
+	dte:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)
+	//dtex:=strconv.Itoa(day)+"/"+strconv.Itoa(int(month))+"/"+strconv.Itoa(year)+":"+strconv.Itoa(hour)+":"+strconv.Itoa(min)+":"+strconv.Itoa(sec)
+        dtex:=  t.TransactionTime( stub, stub.GetTxID() )
+	x.CalcDate=dte
+        x.DOB=contract.Lf.Dob
+        x.Gender=contract.Lf.Gender
+        x.Smoker=contract.Lf.Smoker
+        x.Suminsured=contract.SumAssured
+        x.Service="DemoCharges"
+        b := new(bytes.Buffer)
+        json.NewEncoder(b).Encode(x)
+        fmt.Println(b) 
+        //res, errx := http.Post("http://203.106.175.109:8080/test", "application/json; charset=utf-8",  b )
+        var resx Res;
+	coi:=33.00
+        fmc:=10.00
+	adc:=12.00
+        totalcharges:=55.00
+        /*if errx == nil {
+          body, _ := ioutil.ReadAll(res.Body)
+
+          json.Unmarshal(body , &resx)
+         coi, _ =strconv.ParseFloat(resx.COI,10)
+	 fmc, _ =strconv.ParseFloat(resx.FMC,10)
+         adc, _ =strconv.ParseFloat(resx.AMC,10)
+         totalcharges=coi+fmc+adc
+         fmt.Println( "COI="+ resx.COI +" FMC=" + resx.FMC +" AMC="+ resx.AMC )
+       } else{   ******************/
+          //fmt.Println(errx)
+	  resx.COI="33"
+	  resx.FMC="10"
+	  resx.AMC="12"
+       // }
+
+
+	//****************************
+	// Write history record first
+        charges:=[]string{resx.COI,resx.FMC, resx.AMC}
+	var h History
+	h.Methd="Scheduled Processing"
+	h.Funct="Deduct Charges"
+	h.Tranid=invokeTran
+	h.Cont=policy.Cont
+	h.Args=charges
+        h.Args[0]= strconv.FormatFloat( totalcharges ,  'f' , 2,  64)
+        h.Dte=dtex
+
+
+	//*******************************************
+	//* Do the valuation
+ 	fmt.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
+
+	i, _ := strconv.ParseFloat( policy.Cont.Acct.Valuation , 10);
 	i = i - float64(coi+fmc+adc)
-        contract.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
- 	log.Print("DE***** Contract value="+contract.Acct.Valuation)
+        if i< 0 {
+          i = 0 
+        }
+        policy.Cont.Acct.Valuation= strconv.FormatFloat(i,  'f' , 2,  64)
+ 	log.Print("DE***** Contract value="+policy.Cont.Acct.Valuation)
+        h.EndValue=policy.Cont.Acct.Valuation
+	policy.Hist[dtex]=h
+        //*****************************
+        // save policy sate 
+        //b1, _ := json.Marshal(policy)
+	//stub.PutState(policy.Cont.ContID, b1)
+
+
+        //********************************************************
+        //* Check lapsing rules
+        if i < ( coi+fmc+adc ) {
+         policy.Cont.Status="LS"
+	}
 	//*************************
 	// GL Posting COI
 	var glt GLtran
@@ -753,7 +900,7 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
  	glt.Cracc="MGEXP"
  	glt.Cr=strconv.FormatFloat(-float64(adc),  'f' , 2,  64)
 	glPost(stub, glt , "ADC" )
-	policy.Cont=contract
+	//policy.Cont=contract
 	return policy, nil
 
 }
@@ -761,8 +908,22 @@ func (t *SimpleChaincode) ProcessCharges(stub shim.ChaincodeStubInterface, args 
 
 func (t *SimpleChaincode) statement(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
 	var contract Contract=policy.Cont
-	subject:="Your Monthly Statement for "+contract.ContID 
-	body:= `Your Statement of account: #N Account Holder:`+contract.Owner+` #N Value:`+contract.Acct.Valuation+` #N Yours Sincerely, Danny `
+	//subject:="Your Monthly Statement"
+	//body:= `Your Statement of account: #N Account Holder:`+contract.Owner+`#NPolicy No: `+contract.ContID +` #N Value:`+contract.Acct.Valuation+` #N Yours Sincerely, Danny`
+	subject:="Your monthly statement"
+	body:=`Dear Mr `+ contract.Lf.Name + `#N Policy Number=`+policy.Cont.ContID+`#N Value of Policy=`+contract.Acct.Valuation+` #N `
+	t.mailto(stub, subject , body, policy )
+ return nil,nil
+}
+
+func (t *SimpleChaincode) lapseNotification(stub shim.ChaincodeStubInterface, args []string , policy Policy) ([]byte, error) {
+	var contract Contract=policy.Cont
+	//subject:="Your Policy Has Lapsed"
+	//body:= `: #N Account Holder:`+contract.Owner+`#NPolicy No: `+contract.ContID +` #N Value:`+contract.Acct.Valuation+` #N Yours Sincerely, Danny`
+	subject:="Your monthly statement"
+	body:=`Dear Mr `+ contract.Lf.Name + `#N Policy Number=`+policy.Cont.ContID+`#N The remaining value of your policy is below the minimum to support it#N`+
+        `Value of Policy=`+contract.Acct.Valuation+` #N The policy has now lapsed. If payment is made within one month the policy will be reinstated.`+
+	`#N If no payment is made the remaining value will be paid out within 14 days`
 	t.mailto(stub, subject , body, policy )
  return nil,nil
 }

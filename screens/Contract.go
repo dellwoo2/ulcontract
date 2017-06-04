@@ -11,6 +11,7 @@ import (
 "strings"
 //"strconv"
 "encoding/json"
+"sort"
 )
 type Res struct{
 	Status string
@@ -26,6 +27,7 @@ type Ret struct{
 type Wallet struct{
  User string
  Policies map[string]string
+ Message string
 }
 
 var wa Wallet
@@ -86,6 +88,10 @@ type Page struct {
     Title string
     Body  []byte
 }
+type Txn struct{
+  id string
+  Txnstr string
+}
 type Test struct{
   Title string
   Body string
@@ -95,6 +101,19 @@ type Test struct{
   DD string
   EE string
 }
+
+type History struct{
+ Methd string
+ Funct string
+ Cont Contract
+ Args []string
+ Tranid string 
+ Dte string
+ EndValue string
+}
+
+var hist map[string]History
+
 func editHandler(w http.ResponseWriter, r *http.Request) {
     title := r.URL.Path[len("/edit/"):]
     p, err := loadPage(title)
@@ -129,9 +148,15 @@ r.ParseForm()
 //fmt.Fprintln(w, r.Form)
 //fmt.Print(r.Form)
 fmt.Print("calling process\n")
-
+                wa.Message=""
+    var txn Txn
     title := r.URL.Path[len("/process/"):]
 	  fmt.Println("Title="+title+":")
+
+    if title=="Txn.html" {
+	txn=getTransactions(cont.ContID)
+
+    }
     if title=="doit" {
 	//call the CC API
 	if r.FormValue("cid") == "" {
@@ -160,8 +185,9 @@ fmt.Print("calling process\n")
 		 //cm["000" + strconv.FormatInt( x ,10)]=ccid
 		 count++
 		 fmt.Println(ccid)
-        	title="EnterContract.html"
- 		policyList("admin" )
+        	 title="EnterContract.html"
+ 		 //policyList("admin" )
+		 wa.Policies[cont.ContID]=cont.ContID
            } else {
 		fmt.Print("Update existing contract")
 	  }
@@ -170,6 +196,13 @@ fmt.Print("calling process\n")
 		fmt.Print("Process Pay")
 		payment( r.FormValue("pay"), cont )
         	title="Payment.html"
+                wa.Message="Payment submitted"
+ 	} 
+	if title=="surr" {
+		fmt.Print("Process Surrender")
+		surrender( r.FormValue("surramount"), cont )
+        	title="Surrender.html"
+                wa.Message="Surrender request submitted"
  	}
 	if title=="fund" {
     		var f map[string]string
@@ -196,16 +229,80 @@ fmt.Print("calling process\n")
     t, err := template.ParseFiles("colour_orange/"+title)
 	fmt.Print(err)
 	fmt.Print("\n")
-	if title == "Payment.html" || title == "fund_Switch.html" {
+	if title == "Payment.html" || title == "fund_Switch.html" || title == "Surrender.html" {
 		fmt.Print("t.Execute(w, wa.Policies )")
     	   t.Execute(w, wa.Policies )	
+	}else 	if title == "Txn.html" {
+    	   t.Execute(w, template.HTML(txn.Txnstr) )
 	}else{
     	   t.Execute(w, cont )
         }
 	//fmt.Fprintln(w, string(p.Body))
 	//**w.Write(p.Body)
 }
+func getTransactions( contid string) Txn {
+  var jsonStr = []byte( `
+  {
+     "jsonrpc": "2.0",
+     "method": "query",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "name":"`+ccid+`"
+         },
+         "ctorMsg": {
+             "function": "transactions",
+             "args": [
+		"`+contid+`"
+             ]
+         },
+         "secureContext":"admin"
+     },
+     "id": 2
+ }` )
+    fmt.Println("Transaction History :"+string( jsonStr) )	
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
 
+    fmt.Println("response Status:", resp.Status)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("Transaction History:", string(body))
+    var ret Ret
+    err=json.Unmarshal(body , &ret)
+    str:=`      <table>
+		<tr>
+		 <td>Date</td>
+		 <td>transaction</td>
+		 <td>Transaction amt</td>
+		 <td>Contract Value</td>
+		 <td>Sel</td>
+		</tr>`
+    json.Unmarshal([]byte(ret.Result.Message), &hist)
+    var a []string
+    for kk , _ := range hist {
+         a= append(a,kk)
+     }	
+    sort.Strings(a)
+    for _ , k := range a {
+
+	str=str+`<TR><TD>`+hist[k].Dte+`</TD><TD>`+hist[k].Funct+`</TD><TD>`+hist[k].Args[0]+`</TD><TD>`+hist[k].EndValue+`</TD><TD></TD></TR>`
+     }	
+    str=str+`</TABLE>`
+  fmt.Println("TRANS="+str)
+  var txn Txn;
+  txn.Txnstr=str
+  return txn 
+}
 func fundupdate(contid string,  f map[string]string)(){
   b, err := json.Marshal(f )
   var jsonStr = []byte( `
@@ -317,7 +414,8 @@ func  policyList(user string  )(string){
     
     json.Unmarshal([]byte(ret.Result.Message), &wa)
           for key, value := range wa.Policies{
-		fmt.Println("KEY="+key+" Value="+value)	
+		fmt.Println("KEY="+key+" Value="+value)
+                cont.ContID=key	
 	  }	
    return  string(body)
 }
@@ -529,7 +627,46 @@ func payment(  payment string , cont Contract )(string){
     fmt.Println("Payment Response:", string(body))
     return ccid
 }
+func surrender(  surrvalue string , cont Contract )(string){
+  var jsonStr = []byte( `{
+     "jsonrpc": "2.0",
+     "method": "invoke",
+     "params": {
+         "type": 1,
+         "chaincodeID": {
+             "name":"`+ccid+`"
+         },
+         "ctorMsg": {
+             "function": "surrender",
+             "args": [
+                 "`+cont.ContID+`",
+                 "`+surrvalue+`"
+             ]
+         },
+         "secureContext": "admin"
+     },
+     "id": 3
+ }` )
 
+    fmt.Println("Surrender:", string(jsonStr) )
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+    req.Header.Set("X-Custom-Header", "myvalue")
+    req.Header.Set("Content-Type", "application/json")
+    //req.Header.Set("Postman-Token", "")
+    req.Header.Set("Cache-Control", "no-cache")
+    req.Header.Set("accept", "application/json")
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+
+    fmt.Println("Surrender Status:", resp.Status)
+    body, _ := ioutil.ReadAll(resp.Body)
+    fmt.Println("Surender Response:", string(body))
+    return ccid
+}
 
 
 func main() {
@@ -559,6 +696,7 @@ fmt.Println(t.String())
 http.HandleFunc("/process/", process)
 http.Handle("/process/style/", http.StripPrefix("/process/style/", http.FileServer(http.Dir("/Go/src/github.com/dellwoo2/ulcontract/screens/style"))))
 http.HandleFunc("/edit/", editHandler)
+wa.Policies=make(map[string]string)
  policyList("admin" )
 server.ListenAndServe()
 }
